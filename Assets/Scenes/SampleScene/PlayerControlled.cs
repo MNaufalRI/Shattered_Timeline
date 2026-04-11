@@ -5,6 +5,7 @@ public class PlayerControlled : MonoBehaviour
 {
     [SerializeField] CharacterController controller;
     [SerializeField] float speed = 5f;
+    [SerializeField] float sprintSpeed = 9f;
     [SerializeField] float turnSpeed = 10f;
     [SerializeField] float gravityValue = -20f;
     [SerializeField] float jumpHeight = 2f;
@@ -12,6 +13,7 @@ public class PlayerControlled : MonoBehaviour
 
     private Vector3 playerVelocity;
     private bool groundedPlayer;
+    private bool isSprinting;
     private Animator anim;
 
     void Start()
@@ -31,6 +33,8 @@ public class PlayerControlled : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
+        isSprinting = keyboard.shiftKey.isPressed;
+
         float moveHorizontal = 0;
         if (keyboard.aKey.isPressed) moveHorizontal = -1;
         else if (keyboard.dKey.isPressed) moveHorizontal = 1;
@@ -47,7 +51,8 @@ public class PlayerControlled : MonoBehaviour
             Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
 
-            controller.Move(moveDirection * speed * Time.deltaTime);
+            float currentSpeed = isSprinting ? sprintSpeed : speed;
+            controller.Move(moveDirection * currentSpeed * Time.deltaTime);
         }
 
         if (keyboard.spaceKey.wasPressedThisFrame && groundedPlayer)
@@ -75,7 +80,14 @@ public class PlayerControlled : MonoBehaviour
         {
             if (moveDirection.magnitude >= 0.1f)
             {
-                anim.Play("WalkForward");
+                if (isSprinting)
+                {
+                    anim.Play("WalkForward");
+                }
+                else
+                {
+                    anim.Play("WalkForward");
+                }
             }
             else
             {
