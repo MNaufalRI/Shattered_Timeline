@@ -9,11 +9,16 @@ public class PlayerControlled : MonoBehaviour
     [SerializeField] GameObject activeChar;
     [SerializeField] Transform cameraTransform;
 
+    [Header("Projectile Settings")]
+    [SerializeField] GameObject projectilePrefab;
+    [SerializeField] Transform projectileSpawnPoint;
+    [SerializeField] float projectileSpeed = 20f;
+    [SerializeField] float projectileLifeTime = 3f;
+
     [Header("Movement")]
     [SerializeField] float walkSpeed = 6f;
     [SerializeField] float sprintSpeed = 10f;
     [SerializeField] float acceleration = 10f;
-    [SerializeField] float deceleration = 15f;
     [SerializeField] float turnSpeed = 15f;
 
     [Header("Stamina")]
@@ -25,15 +30,12 @@ public class PlayerControlled : MonoBehaviour
     public float CurrentStamina { get; private set; }
     public float MaxStamina => maxStamina;
 
-    [Header("Jump & Gravity")]
+    [Header("Gravity")]
     [SerializeField] float gravityValue = -20f;
-    [SerializeField] float jumpHeight = 2f;
 
     [Header("Combat")]
-    [SerializeField] float attackCooldown = 0.8f;
-    [SerializeField] float comboResetTime = 1.2f;
-    [SerializeField] int maxComboSteps = 3;
-    [SerializeField] bool canAirAttack = true;
+    [SerializeField] float comboResetTime = 1.5f;
+    [SerializeField] float minTimeBetweenCombos = 0.4f;
 
     private Vector3 playerVelocity;
     private Vector3 currentMoveVelocity;
@@ -41,14 +43,29 @@ public class PlayerControlled : MonoBehaviour
     private bool isSprinting;
     private float staminaRegenTimer;
     private Animator anim;
+    private bool isTransitioning = false;
 
     private int comboStep = 0;
-    private float lastAttackTime = -99f;
     private float lastInputTime = -99f;
+    private float lastAttackStartTime = -99f;
     private bool isAttacking = false;
     private bool isDefending = false;
+    private bool pendingCombo = false;
+    private bool playingMaintain = false;
 
-    private readonly string[] comboAnims = { "Attack01", "Attack02Start", "Attack03Start", "Attack04" };
+    private static readonly string[] comboStart = {
+        "Attack01",
+        "Attack02Start",
+        "Attack03Start",
+        "Attack04",
+    };
+    private static readonly string[] comboMaintain = {
+        "",
+        "Attack02Maintain",
+        "Attack03Maintain",
+        "",
+    };
+    private const int maxComboSteps = 4;
 
     void Start()
     {
@@ -71,12 +88,11 @@ public class PlayerControlled : MonoBehaviour
         HandleSprint(moveDirection);
         HandleDefend();
         HandleAttackInput();
-        HandleJumpAttack();
         CheckAttackFinished();
 
         ApplyMovement(moveDirection);
         ApplyRotation(moveDirection);
-        ApplyJumpAndGravity();
+        ApplyGravity();
         UpdateAnimation(moveDirection);
     }
 
@@ -134,18 +150,19 @@ public class PlayerControlled : MonoBehaviour
     {
         if (isAttacking || isDefending)
         {
-            currentMoveVelocity = Vector3.MoveTowards(
-                currentMoveVelocity, Vector3.zero, deceleration * Time.deltaTime);
-            controller.Move(currentMoveVelocity * Time.deltaTime);
+            currentMoveVelocity = Vector3.zero;
+            controller.Move(Vector3.zero);
             return;
         }
 
         float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
         Vector3 targetVelocity = moveDirection * currentSpeed;
-        float rate = moveDirection.magnitude >= 0.1f ? acceleration : deceleration;
 
-        currentMoveVelocity = Vector3.MoveTowards(
-            currentMoveVelocity, targetVelocity, rate * Time.deltaTime);
+        if (moveDirection.magnitude < 0.1f)
+            currentMoveVelocity = Vector3.zero;
+        else
+            currentMoveVelocity = Vector3.MoveTowards(
+                currentMoveVelocity, targetVelocity, acceleration * Time.deltaTime);
 
         controller.Move(currentMoveVelocity * Time.deltaTime);
     }
@@ -160,41 +177,10 @@ public class PlayerControlled : MonoBehaviour
             transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
     }
 
-    void ApplyJumpAndGravity()
+    void ApplyGravity()
     {
-        var keyboard = Keyboard.current;
-        if (keyboard != null &&
-            keyboard.spaceKey.wasPressedThisFrame &&
-            groundedPlayer &&
-            !isAttacking &&
-            !isDefending)
-        {
-            playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravityValue);
-            anim.Play("JumpStart");
-        }
-
         playerVelocity.y += gravityValue * Time.deltaTime;
         controller.Move(playerVelocity * Time.deltaTime);
-    }
-
-    void UpdateAnimation(Vector3 moveDirection)
-    {
-        if (isAttacking || isDefending) return;
-
-        if (!groundedPlayer)
-        {
-            var stateInfo = anim.GetCurrentAnimatorStateInfo(0);
-            if (!stateInfo.IsName("JumpStart") && !stateInfo.IsName("JumpAir"))
-                anim.Play("JumpAir");
-        }
-        else if (moveDirection.magnitude >= 0.1f)
-        {
-            anim.Play(isSprinting ? "BattleRunForward" : "WalkForward");
-        }
-        else
-        {
-            anim.Play("Idle01");
-        }
     }
 
     void HandleDefend()
@@ -237,55 +223,123 @@ public class PlayerControlled : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        if (!keyboard.zKey.wasPressedThisFrame) return;
+        bool attackPressed = keyboard.spaceKey.wasPressedThisFrame;
+
+        if (!attackPressed) return;
         if (isDefending) return;
 
         float now = Time.time;
-        if (now - lastAttackTime < attackCooldown) return;
+
+        if (now - lastAttackStartTime < minTimeBetweenCombos) return;
 
         if (now - lastInputTime > comboResetTime)
             comboStep = 0;
 
-        string animName = comboAnims[comboStep % maxComboSteps];
-        anim.Play(animName);
+        if (isAttacking)
+        {
+            var info = anim.GetCurrentAnimatorStateInfo(0);
 
-        isAttacking = true;
-        lastAttackTime = now;
-        lastInputTime = now;
-        comboStep++;
+            if (info.normalizedTime < 0.4f) return;
 
-        if (comboStep >= maxComboSteps)
-            comboStep = 0;
+            string maintainAnim = comboMaintain[comboStep > 0 ? comboStep - 1 : 0];
+            bool hasMaintain = !string.IsNullOrEmpty(maintainAnim);
+
+            if (hasMaintain && !playingMaintain)
+            {
+                anim.Play(maintainAnim);
+                playingMaintain = true;
+                isTransitioning = true;
+                lastInputTime = now;
+                lastAttackStartTime = now;
+            }
+            else
+            {
+                pendingCombo = true;
+                lastInputTime = now;
+            }
+            return;
+        }
+
+        ExecuteComboStep(now);
     }
 
-    void HandleJumpAttack()
+    void ExecuteComboStep(float now)
     {
-        if (!canAirAttack) return;
+        if (comboStep >= maxComboSteps) comboStep = 0;
 
-        var keyboard = Keyboard.current;
-        if (keyboard == null) return;
+        anim.Play(comboStart[comboStep]);
 
-        if (keyboard.zKey.wasPressedThisFrame && !groundedPlayer)
+        isTransitioning = true;
+        isAttacking = true;
+        playingMaintain = false;
+        pendingCombo = false;
+
+        lastInputTime = now;
+        lastAttackStartTime = now;
+
+        comboStep++;
+        if (comboStep >= maxComboSteps) comboStep = 0;
+    }
+
+    public void SpawnProjectile()
+    {
+        if (projectilePrefab == null || projectileSpawnPoint == null) return;
+
+        GameObject go = Instantiate(projectilePrefab, projectileSpawnPoint.position, transform.rotation);
+        Rigidbody rb = go.GetComponent<Rigidbody>();
+
+        if (rb != null)
         {
-            anim.Play("JumpAirAttack");
-            isAttacking = true;
+            rb.linearVelocity = transform.forward * projectileSpeed;
         }
+
+        Destroy(go, projectileLifeTime);
     }
 
     void CheckAttackFinished()
     {
         if (!isAttacking) return;
 
-        var info = anim.GetCurrentAnimatorStateInfo(0);
-        bool inAttackAnim = info.IsName("Attack01") ||
-                            info.IsName("Attack02Start") ||
-                            info.IsName("Attack02Maintain") ||
-                            info.IsName("Attack03Start") ||
-                            info.IsName("Attack04") ||
-                            info.IsName("JumpAirAttack");
+        if (isTransitioning)
+        {
+            isTransitioning = false;
+            return;
+        }
 
-        if (inAttackAnim && info.normalizedTime >= 0.85f)
-            isAttacking = false;
+        var info = anim.GetCurrentAnimatorStateInfo(0);
+
+        bool inAttackAnim =
+            info.IsName("Attack01") ||
+            info.IsName("Attack02Start") ||
+            info.IsName("Attack02Maintain") ||
+            info.IsName("Attack03Start") ||
+            info.IsName("Attack03Maintain") ||
+            info.IsName("Attack04");
+
+        if (!inAttackAnim) { isAttacking = false; return; }
+
+        if (info.normalizedTime >= 0.85f)
+        {
+            if (pendingCombo && (Time.time - lastInputTime) <= comboResetTime)
+            {
+                ExecuteComboStep(Time.time);
+            }
+            else
+            {
+                isAttacking = false;
+                playingMaintain = false;
+            }
+        }
+    }
+
+    void UpdateAnimation(Vector3 moveDirection)
+    {
+        if (isAttacking || isDefending) return;
+
+        if (moveDirection.magnitude >= 0.1f)
+            anim.Play(isSprinting ? "BattleRunForward" : "WalkForward");
+        else
+            anim.Play("Idle01");
     }
 
     public bool IsGrounded() => groundedPlayer;
