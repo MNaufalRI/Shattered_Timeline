@@ -71,11 +71,18 @@ public class EnemySimple : MonoBehaviour
 
     void Die()
     {
+        if (isDead) return; 
         isDead = true;
-        Debug.Log("Capsule hancur!");
 
-        GetComponent<Renderer>().material.color = Color.gray;
-        Destroy(gameObject, 0.5f);
+        Debug.Log(gameObject.name + " telah dikalahkan dan langsung hilang!");
+
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.enabled = false;
+        }
+
+        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()
