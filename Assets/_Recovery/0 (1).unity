@@ -797,7 +797,7 @@ MonoBehaviour:
   projectileSpawnPoint: {fileID: 0}
   projectileSpeed: 20
   projectileLifeTime: 3
-  walkSpeed: 5
+  walkSpeed: 6
   sprintSpeed: 10
   acceleration: 40
   turnSpeed: 15
