@@ -55,6 +55,7 @@ public class Player_Controlled_2 : MonoBehaviour
     private bool isAttacking = false;
     private bool isDefending = false;
     private bool pendingCombo = false;
+    public bool canControl = true;
 
     private static readonly string[] comboStart = {
         "Attack01",
@@ -76,6 +77,13 @@ public class Player_Controlled_2 : MonoBehaviour
 
     void Update()
     {
+        if (!canControl)
+        {
+            if (anim != null) anim.Play("Idle01");
+            ApplyGravity();
+            return;
+        }
+
         groundedPlayer = controller.isGrounded;
         if (groundedPlayer && playerVelocity.y < 0)
             playerVelocity.y = -2f;

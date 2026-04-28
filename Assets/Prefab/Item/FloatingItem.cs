@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FloatingItem : MonoBehaviour
+public class FloatingItem : Interactable 
 {
     [Header("Visual Settings")]
     public float rotateSpeed = 100f;
@@ -8,7 +8,7 @@ public class FloatingItem : MonoBehaviour
     public float floatFrequency = 1f;
 
     [Header("Pickup Settings")]
-    public float pickupDelay = 1.5f; 
+    public float pickupDelay = 1.5f;
 
     private float spawnTime;
     private Vector3 startPos;
@@ -17,6 +17,8 @@ public class FloatingItem : MonoBehaviour
     {
         startPos = transform.position;
         spawnTime = Time.time;
+
+        promptMessage = "untuk mengambil item";
     }
 
     void Update()
@@ -28,26 +30,21 @@ public class FloatingItem : MonoBehaviour
         transform.position = tempPos;
     }
 
-    private void OnTriggerEnter(Collider other)
+    public override void Interact()
     {
-        if (other.CompareTag("Player"))
+        if (Time.time >= spawnTime + pickupDelay)
         {
-            if (Time.time >= spawnTime + pickupDelay)
-            {
-                AmbilItem();
-            }
-            else
-            {
-                Debug.Log("Sabar, item baru saja muncul!");
-            }
+            AmbilItem();
+        }
+        else
+        {
+            Debug.Log("Sabar, item baru saja muncul!");
         }
     }
 
     void AmbilItem()
     {
         Debug.Log("Item Cube berhasil masuk kantong!");
-
-
         Destroy(gameObject);
     }
 }
