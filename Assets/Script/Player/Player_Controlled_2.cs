@@ -80,6 +80,7 @@ public class Player_Controlled_2 : MonoBehaviour
         if (!canControl)
         {
             if (anim != null) anim.Play("Idle01");
+
             ApplyGravity();
             return;
         }

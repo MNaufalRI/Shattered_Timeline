@@ -813,6 +813,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
+  canControl: 1
 --- !u!143 &655873369
 CharacterController:
   m_ObjectHideFlags: 0
