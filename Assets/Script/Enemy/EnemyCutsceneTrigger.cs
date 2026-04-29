@@ -27,6 +27,9 @@ public class EnemyCutsceneTrigger : MonoBehaviour
 
         player.canControl = false;
 
+        Animator a = player.GetComponentInChildren<Animator>();
+        a.Play("Idle01", 0, 0f);
+
         enemyVcam.Priority = 20;
         yield return new WaitForSeconds(cutsceneDuration);
 

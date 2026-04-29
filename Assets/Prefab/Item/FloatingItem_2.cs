@@ -46,6 +46,12 @@ public class FloatingItem_2 : MonoBehaviour
     void AmbilItem()
     {
         Debug.Log("Item Cube berhasil masuk kantong!");
+#if UNITY_EDITOR
+        if (UnityEditor.Selection.activeGameObject == gameObject)
+        {
+            UnityEditor.Selection.activeGameObject = null;
+        }
+#endif
         Destroy(gameObject);
     }
 }
