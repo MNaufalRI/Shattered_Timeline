@@ -1,13 +1,12 @@
 using UnityEngine;
-using System.Collections;
 
 public class GatherableItem : Interactable
 {
     [Header("Gathering Settings")]
-    public string itemName = "Tanaman Herbal"; 
-    public float gatherTime = 2.1f;
+    public string itemName = "Tanaman Herbal";
 
-    private bool isGathering = false; 
+    private bool isGathering = false;
+
     void Start()
     {
         promptMessage = "untuk mengumpulkan " + itemName;
@@ -15,39 +14,27 @@ public class GatherableItem : Interactable
 
     public override void Interact()
     {
-        if (!isGathering)
-        {
-            StartCoroutine(GatherRoutine());
-        }
+        if (isGathering) return;
+
+        Player_Controlled_3 player = FindFirstObjectByType<Player_Controlled_3>();
+        if (player == null) return;
+
+        isGathering = true;
+
+        player.StartGathering(this);
+
+        Debug.Log("Mulai gathering...");
     }
 
-    IEnumerator GatherRoutine()
+    public void OnGatherFinished()
     {
-        isGathering = true;
-        Player_Controlled_2 playerScript = FindFirstObjectByType<Player_Controlled_2>();
-
-        if (playerScript != null)
-        {
-            playerScript.canControl = false;
-
-            playerScript.anim.Play("Gathering");
-
-            Debug.Log("Animasi Gathering dimulai...");
-        }
-
-        yield return new WaitForSeconds(gatherTime);
-
-        if (playerScript != null)
-        {
-            playerScript.canControl = true;
-        }
-
 #if UNITY_EDITOR
         if (UnityEditor.Selection.activeGameObject == gameObject)
         {
             UnityEditor.Selection.activeGameObject = null;
         }
 #endif
+
         Destroy(gameObject);
     }
 }
