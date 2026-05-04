@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 1259097190462839266}
   - component: {fileID: 4011655623347797014}
   - component: {fileID: 4487790897221860840}
-  - component: {fileID: 4479015548790385495}
-  - component: {fileID: 3948132076321470964}
+  - component: {fileID: 2556643783995723956}
   m_Layer: 9
   m_Name: Item
   m_TagString: Untagged
@@ -114,24 +113,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4479015548790385495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5162586421148616860}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 381663b865edf394aa62ce659199832f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FloatingItem
-  promptMessage: untuk berinteraksi
-  rotateSpeed: 50
-  floatAmplitude: 0.2
-  floatFrequency: 1
-  pickupDelay: 1.5
---- !u!114 &3948132076321470964
+--- !u!114 &2556643783995723956
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,10 +122,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 5162586421148616860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 018768ffba6f9444aa437ba61142a85f, type: 3}
+  m_Script: {fileID: 11500000, guid: d32d5d4089e73bb4a958bbf143993c3a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FloatingItem_2
-  rotateSpeed: 100
-  floatAmplitude: 0.2
-  floatFrequency: 1
-  pickupDelay: 1.5
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryItemUI
+  itemName: {fileID: 0}
+  itemIcon: {fileID: 0}

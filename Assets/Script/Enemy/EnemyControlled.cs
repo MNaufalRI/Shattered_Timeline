@@ -4,9 +4,7 @@ using UnityEngine.AI;
 public class EnemySimple : MonoBehaviour
 {
     [Header("Loot Settings")]
-    public GameObject itemPrefab;
-    [Range(0, 100)]
-    public float dropChance = 20f;
+    public LootItem[] lootTable;
 
     [Header("Stats")]
     public float health = 50f;
@@ -16,8 +14,8 @@ public class EnemySimple : MonoBehaviour
     public float damageAmount = 10f;
 
     [Header("Roaming Settings")]
-    public float roamRadius = 5f; 
-    public float roamWaitTime = 3f; 
+    public float roamRadius = 5f;
+    public float roamWaitTime = 3f;
 
     private Transform player;
     private NavMeshAgent agent;
@@ -30,10 +28,11 @@ public class EnemySimple : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        homePosition = transform.position; 
+        homePosition = transform.position;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null) player = playerObj.transform;
+        if (playerObj != null)
+            player = playerObj.transform;
 
         roamTimer = roamWaitTime;
     }
@@ -42,21 +41,26 @@ public class EnemySimple : MonoBehaviour
     {
         if (isDead || player == null) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        float distance = Vector3.Distance(transform.position, player.position);
 
-        if (distanceToPlayer <= detectionRadius)
+        if (distance <= detectionRadius)
         {
-            agent.SetDestination(player.position);
-            agent.isStopped = false;
-
-            if (distanceToPlayer <= attackRadius)
-            {
-                TryAttack();
-            }
+            ChasePlayer(distance);
         }
         else
         {
             HandleRoaming();
+        }
+    }
+
+    void ChasePlayer(float distance)
+    {
+        agent.isStopped = false;
+        agent.SetDestination(player.position);
+
+        if (distance <= attackRadius)
+        {
+            TryAttack();
         }
     }
 
@@ -68,40 +72,46 @@ public class EnemySimple : MonoBehaviour
 
             if (roamTimer >= roamWaitTime)
             {
-                Vector3 randomDest = GetRandomRoamPosition(homePosition, roamRadius);
-                agent.SetDestination(randomDest);
-                agent.isStopped = false;
-                roamTimer = 0;
+                Vector3 newPos = GetRandomRoamPosition(homePosition, roamRadius);
+                agent.SetDestination(newPos);
+                roamTimer = 0f;
             }
         }
     }
 
     Vector3 GetRandomRoamPosition(Vector3 center, float distance)
     {
-        Vector3 randomPos = Random.insideUnitSphere * distance;
-        randomPos += center;
+        Vector3 randomPos = Random.insideUnitSphere * distance + center;
 
         NavMeshHit hit;
-        NavMesh.SamplePosition(randomPos, out hit, distance, 1);
+        NavMesh.SamplePosition(randomPos, out hit, distance, NavMesh.AllAreas);
+
         return hit.position;
     }
 
-
     void TryAttack()
     {
-        if (Time.time >= lastAttackTime + attackCooldown)
+        if (Time.time < lastAttackTime + attackCooldown) return;
+
+        PlayerStats pStats = player.GetComponent<PlayerStats>();
+        if (pStats != null)
         {
-            Debug.Log("Capsule menyerang Player!");
-            PlayerStats pStats = player.GetComponent<PlayerStats>();
-            if (pStats != null) pStats.TakeDamage(damageAmount);
-            lastAttackTime = Time.time;
+            pStats.TakeDamage(damageAmount);
         }
+
+        lastAttackTime = Time.time;
     }
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return;
+
         health -= damage;
-        if (health <= 0) Die();
+
+        if (health <= 0)
+        {
+            Die();
+        }
     }
 
     void Die()
@@ -109,20 +119,7 @@ public class EnemySimple : MonoBehaviour
         if (isDead) return;
         isDead = true;
 
-        float randomValue = Random.Range(0f, 100f);
-
-        if (randomValue <= dropChance)
-        {
-            if (itemPrefab != null)
-            {
-                Instantiate(itemPrefab, transform.position + Vector3.up * 0.5f, Quaternion.identity);
-                Debug.Log("Beruntung! Item dijatuhkan.");
-            }
-        }
-        else
-        {
-            Debug.Log("Tidak beruntung, item tidak muncul.");
-        }
+        DropLoot();
 
         if (agent != null)
         {
@@ -133,21 +130,46 @@ public class EnemySimple : MonoBehaviour
         Destroy(gameObject);
     }
 
+    void DropLoot()
+    {
+        if (lootTable == null || lootTable.Length == 0)
+        {
+            Debug.Log("Loot table kosong!");
+            return;
+        }
+
+        foreach (var loot in lootTable)
+        {
+            if (loot.prefab == null) continue;
+
+            float roll = Random.Range(0f, 100f);
+
+            if (roll <= loot.dropChance)
+            {
+                Vector3 spawnPos = transform.position + Vector3.up * 0.5f;
+                Instantiate(loot.prefab, spawnPos, Quaternion.identity);
+
+                Debug.Log("Drop: " + loot.prefab.name);
+            }
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
 
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRadius);
 
-        if (Application.isPlaying)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(homePosition, roamRadius);
-        }
-        else
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, roamRadius);
-        }
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(Application.isPlaying ? homePosition : transform.position, roamRadius);
     }
+}
+
+[System.Serializable]
+public class LootItem
+{
+    public GameObject prefab;
+    [Range(0, 100)] public float dropChance;
 }

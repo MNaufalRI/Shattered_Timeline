@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class GatherableItem : Interactable
 {
+    [Header("Item Data")]
+    public ItemData itemData;
+    public int amount = 1;
+
     [Header("Gathering Settings")]
     public string itemName = "Tanaman Herbal";
 
@@ -28,12 +32,10 @@ public class GatherableItem : Interactable
 
     public void OnGatherFinished()
     {
-#if UNITY_EDITOR
-        if (UnityEditor.Selection.activeGameObject == gameObject)
+        if (InventoryManager.Instance != null && itemData != null)
         {
-            UnityEditor.Selection.activeGameObject = null;
+            InventoryManager.Instance.Add(itemData);
         }
-#endif
 
         Destroy(gameObject);
     }

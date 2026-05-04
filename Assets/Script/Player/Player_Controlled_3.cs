@@ -37,9 +37,12 @@ public class Player_Controlled_3 : MonoBehaviour
     [SerializeField] float dashCooldown = 1f;
 
     [SerializeField] float attackCooldown = 0.2f;
+    float attackTimer = 0f;
+    [SerializeField] float maxAttackDuration = 1f;
 
 
     private float nextAttackTime = 0f;
+    private Quaternion lockedRotation;
 
     private bool isDashing = false;
     private float dashTime;
@@ -97,14 +100,25 @@ public class Player_Controlled_3 : MonoBehaviour
 
         HandleSprint(moveDir);
         HandleDefend();
-        HandleAttack();
-        UpdateAnimation(moveDir);
         HandleDash();
+        HandleAttack();
 
         ApplyMovement(moveDir);
         ApplyRotation(moveDir);
         ApplyGravity();
 
+        UpdateAnimation(moveDir);
+
+        if (isAttacking)
+        {
+            transform.rotation = lockedRotation;
+        }
+    }
+
+    bool IsInAttackAnimation()
+    {
+        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
+        return state.IsTag("Attack");
     }
 
     public void SetGathering(bool state)
@@ -172,6 +186,8 @@ public class Player_Controlled_3 : MonoBehaviour
         float v = (kb.wKey.isPressed ? 1 : 0) + (kb.sKey.isPressed ? -1 : 0);
 
         if (h == 0 && v == 0) return Vector3.zero;
+        if (isAttacking)
+            return Vector3.zero;
 
         Vector3 forward = cameraTransform.forward;
         Vector3 right = cameraTransform.right;
@@ -204,7 +220,11 @@ public class Player_Controlled_3 : MonoBehaviour
             return;
         }
 
-        if (isAttacking || isDefending) return;
+        if (IsInAttackAnimation() || isDefending)
+        {
+            moveVelocity = Vector3.zero; 
+            return;
+        }
 
         float targetSpeed = dir.magnitude > 0.1f
             ? (isSprinting ? sprintSpeed : walkSpeed)
@@ -293,12 +313,14 @@ public class Player_Controlled_3 : MonoBehaviour
     {
         var kb = Keyboard.current;
 
-        if (!kb.spaceKey.wasPressedThisFrame || isDefending)
+        if (!kb.spaceKey.wasPressedThisFrame || isDefending || isDashing)
             return;
 
         float now = Time.time;
+
         if (now < nextAttackTime)
             return;
+
         if (now - lastInputTime > comboResetTime)
             comboStep = 0;
 
@@ -317,13 +339,15 @@ public class Player_Controlled_3 : MonoBehaviour
 
     void StartAttack()
     {
-        if (isAttacking) return; 
-
         anim.SetTrigger("Attack");
         anim.SetInteger("ComboStep", comboStep);
 
+        anim.SetBool("canBeInterrupted", false);
+
         isAttacking = true;
-        lastAttackTime = Time.time;
+
+        lockedRotation = transform.rotation;
+        moveVelocity = Vector3.zero;
 
         comboStep++;
 
@@ -342,8 +366,9 @@ public class Player_Controlled_3 : MonoBehaviour
 
     public void EndAttack()
     {
-        Debug.Log("END ATTACK TERPANGGIL");
         isAttacking = false;
+
+        anim.SetBool("canBeInterrupted", true);
     }
 
     public void Hit()
