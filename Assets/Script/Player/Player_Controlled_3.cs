@@ -71,6 +71,7 @@ public class Player_Controlled_3 : MonoBehaviour
     private float lastInputTime = -99f;
 
     public bool canControl = true;
+    float attackDurationTimer = 0f;
 
 
     void Start()
@@ -78,6 +79,7 @@ public class Player_Controlled_3 : MonoBehaviour
         anim = GetComponent<Animator>();
         stats = GetComponent<PlayerStats>();
 
+        canControl = true;
         stamina = maxStamina;
 
         if (cameraTransform == null)
@@ -86,7 +88,7 @@ public class Player_Controlled_3 : MonoBehaviour
 
     void Update()
     {
-        if (!canControl || (stats != null && stats.IsDead()))
+        if (!canControl)
         {
             ApplyGravity();
             return;
@@ -111,7 +113,12 @@ public class Player_Controlled_3 : MonoBehaviour
 
         if (isAttacking)
         {
-            transform.rotation = lockedRotation;
+            attackDurationTimer -= Time.deltaTime;
+
+            if (attackDurationTimer <= 0f)
+            {
+                EndAttack();
+            }
         }
     }
 
@@ -220,9 +227,9 @@ public class Player_Controlled_3 : MonoBehaviour
             return;
         }
 
-        if (IsInAttackAnimation() || isDefending)
+        if (isAttacking || isDefending)
         {
-            moveVelocity = Vector3.zero; 
+            moveVelocity = Vector3.zero;
             return;
         }
 
@@ -345,6 +352,7 @@ public class Player_Controlled_3 : MonoBehaviour
         anim.SetBool("canBeInterrupted", false);
 
         isAttacking = true;
+        attackDurationTimer = maxAttackDuration; 
 
         lockedRotation = transform.rotation;
         moveVelocity = Vector3.zero;
@@ -367,6 +375,7 @@ public class Player_Controlled_3 : MonoBehaviour
     public void EndAttack()
     {
         isAttacking = false;
+        pendingCombo = false;
 
         anim.SetBool("canBeInterrupted", true);
     }

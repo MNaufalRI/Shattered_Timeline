@@ -3,38 +3,96 @@ using System.Collections;
 
 public class PlayerStats : MonoBehaviour
 {
+    [Header("Health")]
     public float maxHealth = 100f;
     public float currentHealth;
+
+    [Header("Mana")]
+    public float maxMana = 50f;
+    public float currentMana;
+
     public bool isInvincible = false;
 
     [Header("Attack Stats")]
     public float attackDamage = 20f;
+
+    [Header("UI")]
+    public StatBarUI healthBar;
+    public StatBarUI manaBar;
 
     [Header("Respawn")]
     public Transform spawnPoint;
     public float respawnDelay = 2f;
 
     [SerializeField] ScreenFader fader;
+    [SerializeField] private Animator heartAnim;
 
     private Animator anim;
     private bool isDead = false;
     public bool IsDead() => isDead;
+    private float beatTimer = 0f;
 
     private Player_Controlled_3 controller;
 
     void Awake()
     {
         currentHealth = maxHealth;
+        currentMana = maxMana;
 
         anim = GetComponentInChildren<Animator>();
         controller = GetComponent<Player_Controlled_3>();
     }
 
+    void Start()
+    {
+        UpdateUI();
+    }
+
+    void Update()
+    {
+        UpdateHeartBeat();
+    }
+
+    void UpdateUI()
+    {
+        if (healthBar != null)
+            healthBar.SetValue(currentHealth);
+
+        if (manaBar != null)
+            manaBar.SetValue(currentMana);
+    }
+
+    void UpdateHeartBeat()
+    {
+        if (heartAnim == null) return;
+
+        float hpPercent = currentHealth / maxHealth;
+
+        // interval = jarak antar detak
+        float interval = Mathf.Lerp(0.2f, 6f, hpPercent);
+
+        beatTimer += Time.deltaTime;
+
+        if (beatTimer >= interval)
+        {
+            heartAnim.SetTrigger("Beat");
+            beatTimer = 0f;
+        }
+    }
+
+    // ================= DAMAGE =================
+
     public void TakeDamage(float damage)
     {
+        Debug.Log("KENA DAMAGE: " + damage);
+        Debug.Log("HP sekarang: " + currentHealth);
+
         if (isDead || isInvincible) return;
 
         currentHealth -= damage;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        UpdateUI();
 
         if (currentHealth <= 0)
         {
@@ -50,6 +108,30 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    // ================= MANA =================
+
+    public bool UseMana(float amount)
+    {
+        if (currentMana < amount)
+            return false;
+
+        currentMana -= amount;
+        currentMana = Mathf.Clamp(currentMana, 0, maxMana);
+
+        UpdateUI();
+        return true;
+    }
+
+    public void RestoreMana(float amount)
+    {
+        currentMana += amount;
+        currentMana = Mathf.Clamp(currentMana, 0, maxMana);
+
+        UpdateUI();
+    }
+
+    // ================= DEATH =================
+
     void PlayerDie()
     {
         if (isDead) return;
@@ -57,14 +139,10 @@ public class PlayerStats : MonoBehaviour
         isDead = true;
 
         if (anim != null)
-        {
             anim.SetTrigger("Die");
-        }
 
         if (controller != null)
-        {
             controller.canControl = false;
-        }
 
         Debug.Log("Player Mati");
 
@@ -79,6 +157,9 @@ public class PlayerStats : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
 
         currentHealth = maxHealth;
+        currentMana = maxMana;
+
+        UpdateUI();
 
         if (spawnPoint != null)
         {
