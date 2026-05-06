@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.AI;
 
 public class EnemySimple : MonoBehaviour
@@ -19,6 +19,7 @@ public class EnemySimple : MonoBehaviour
 
     private Transform player;
     private NavMeshAgent agent;
+
     private float lastAttackTime;
     private bool isDead = false;
 
@@ -41,6 +42,10 @@ public class EnemySimple : MonoBehaviour
     {
         if (isDead || player == null) return;
 
+        // SAFE NavMesh check
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return;
+
         float distance = Vector3.Distance(transform.position, player.position);
 
         if (distance <= detectionRadius)
@@ -55,6 +60,8 @@ public class EnemySimple : MonoBehaviour
 
     void ChasePlayer(float distance)
     {
+        if (!agent.enabled || !agent.isOnNavMesh) return;
+
         agent.isStopped = false;
         agent.SetDestination(player.position);
 
@@ -66,6 +73,8 @@ public class EnemySimple : MonoBehaviour
 
     void HandleRoaming()
     {
+        if (!agent.enabled || !agent.isOnNavMesh) return;
+
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
             roamTimer += Time.deltaTime;
@@ -102,11 +111,16 @@ public class EnemySimple : MonoBehaviour
         lastAttackTime = Time.time;
     }
 
+    // ✅ DAMAGE TANPA KNOCKBACK
     public void TakeDamage(float damage)
     {
         if (isDead) return;
 
         health -= damage;
+
+        // Optional: efek kena hit (stop sebentar)
+        if (agent != null)
+            StartCoroutine(HitPause());
 
         if (health <= 0)
         {
@@ -114,12 +128,19 @@ public class EnemySimple : MonoBehaviour
         }
     }
 
+    System.Collections.IEnumerator HitPause()
+    {
+        agent.isStopped = true;
+        yield return new WaitForSeconds(0.15f);
+        agent.isStopped = false;
+    }
+
     void Die()
     {
         if (isDead) return;
         isDead = true;
 
-        DropLoot();
+        StopAllCoroutines();
 
         if (agent != null)
         {
@@ -129,6 +150,8 @@ public class EnemySimple : MonoBehaviour
 
         Destroy(gameObject);
     }
+
+
 
     void DropLoot()
     {

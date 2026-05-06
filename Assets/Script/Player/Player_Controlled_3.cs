@@ -380,22 +380,6 @@ public class Player_Controlled_3 : MonoBehaviour
         anim.SetBool("canBeInterrupted", true);
     }
 
-    public void Hit()
-    {
-        Collider[] enemies = Physics.OverlapSphere(
-            transform.position + transform.forward,
-            attackRange,
-            enemyLayer
-        );
-
-        foreach (var enemy in enemies)
-        {
-            if (enemy.TryGetComponent<EnemySimple>(out var e))
-            {
-                e.TakeDamage(stats.attackDamage);
-            }
-        }
-    }
 
 
     void UpdateAnimation(Vector3 dir)

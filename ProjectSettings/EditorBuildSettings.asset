@@ -12,5 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/City_Sample.unity
     guid: a53c7f087a10e514482a05d3dbe607b9
   m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: abb69306df0d35343b3360c976913c09, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

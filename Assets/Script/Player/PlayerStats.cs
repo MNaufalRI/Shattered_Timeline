@@ -68,7 +68,6 @@ public class PlayerStats : MonoBehaviour
 
         float hpPercent = currentHealth / maxHealth;
 
-        // interval = jarak antar detak
         float interval = Mathf.Lerp(0.2f, 6f, hpPercent);
 
         beatTimer += Time.deltaTime;

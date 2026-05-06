@@ -154,17 +154,7 @@ public class Player_Controlled_2 : MonoBehaviour
         return (camForward * v + camRight * h).normalized;
     }
 
-    public void Hit()
-    {
-        Collider[] hitEnemies = Physics.OverlapSphere(transform.position + transform.forward, attackRange, enemyLayer);
-        foreach (Collider enemy in hitEnemies)
-        {
-            if (enemy.TryGetComponent<EnemySimple>(out EnemySimple eSimp))
-            {
-                eSimp.TakeDamage(stats.attackDamage);
-            }
-        }
-    }
+ 
 
     void HandleSprint(Vector3 moveDirection)
     {

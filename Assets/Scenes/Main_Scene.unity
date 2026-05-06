@@ -291,8 +291,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GatherableItem
   promptMessage: untuk berinteraksi
+  itemData: {fileID: 0}
+  amount: 1
   itemName: Tanaman Herbal
-  gatherTime: 2.04
 --- !u!65 &258327297
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -497,8 +498,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GatherableItem
   promptMessage: untuk berinteraksi
+  itemData: {fileID: 0}
+  amount: 1
   itemName: Tanaman Herbal
-  gatherTime: 2.04
 --- !u!1 &299699599
 GameObject:
   m_ObjectHideFlags: 0
@@ -620,8 +622,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab06b2fb86934724db0d90b4f3010853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  itemPrefab: {fileID: 5162586421148616860, guid: cd03b38ce345cf548af3aa14fc343f1f, type: 3}
-  dropChance: 100
+  lootTable: []
   health: 50
   detectionRadius: 6
   attackRadius: 2
@@ -1149,7 +1150,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   maxHealth: 100
   currentHealth: 0
+  maxMana: 50
+  currentMana: 0
+  isInvincible: 0
   attackDamage: 20
+  healthBar: {fileID: 0}
+  manaBar: {fileID: 0}
+  spawnPoint: {fileID: 0}
+  respawnDelay: 2
+  fader: {fileID: 0}
+  heartAnim: {fileID: 0}
 --- !u!114 &655873374
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1249,8 +1259,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GatherableItem
   promptMessage: untuk berinteraksi
+  itemData: {fileID: 0}
+  amount: 1
   itemName: Tanaman Herbal
-  gatherTime: 2.04
 --- !u!65 &824199005
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1564,8 +1575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab06b2fb86934724db0d90b4f3010853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  itemPrefab: {fileID: 5162586421148616860, guid: cd03b38ce345cf548af3aa14fc343f1f, type: 3}
-  dropChance: 100
+  lootTable: []
   health: 50
   detectionRadius: 6
   attackRadius: 2
@@ -2357,13 +2367,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a846177c3013d4479b12ff74580b44f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  activeChar: {fileID: 1300116003}
-  movement: {fileID: 1300116007}
+  anim: {fileID: 0}
+  movement: {fileID: 0}
+  stats: {fileID: 0}
+  attackRange: 2
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
   attackCooldown: 0.8
   comboResetTime: 1.2
-  maxComboSteps: 3
-  defendStaminaCostPerSec: 15
-  canAirAttack: 1
+  maxAttackDuration: 1
 --- !u!4 &1370065587 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400058, guid: d84eaa1354c31fa49a71e96cc487d56f, type: 3}
