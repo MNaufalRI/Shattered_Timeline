@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
 
 public class EnemySimple : MonoBehaviour
 {
@@ -17,18 +18,35 @@ public class EnemySimple : MonoBehaviour
     public float roamRadius = 5f;
     public float roamWaitTime = 3f;
 
+    [Header("Hit Settings")]
+    public float hitPauseDuration = 0.15f; // lebih natural
+
+    [Header("Rotation Settings")]
+    public float rotationSpeed = 10f;
+
     private Transform player;
     private NavMeshAgent agent;
 
     private float lastAttackTime;
     private bool isDead = false;
+    private bool isHitPaused = false;
+    private bool isAggro = false;
 
     private Vector3 homePosition;
     private float roamTimer;
 
+    private float originalSpeed;
+
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        // simpan speed awal
+        originalSpeed = agent.speed;
+
+        // penting: rotasi manual biar gak glitch
+        agent.updateRotation = false;
+
         homePosition = transform.position;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -41,39 +59,70 @@ public class EnemySimple : MonoBehaviour
     void Update()
     {
         if (isDead || player == null) return;
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
-        // SAFE NavMesh check
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+        // Saat kena hit → cuma hadap player (tidak jalan)
+        if (isHitPaused)
+        {
+            RotateTowards(player.position);
             return;
+        }
 
         float distance = Vector3.Distance(transform.position, player.position);
 
         if (distance <= detectionRadius)
         {
+            isAggro = true;
             ChasePlayer(distance);
         }
         else
         {
+            isAggro = false;
             HandleRoaming();
+        }
+
+        // 🔥 FAIL SAFE (anti stuck)
+        if (isAggro && !agent.hasPath)
+        {
+            agent.SetDestination(player.position);
         }
     }
 
+    // ================= ROTATION =================
+
+    void RotateTowards(Vector3 targetPos)
+    {
+        Vector3 dir = targetPos - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f) return;
+
+        Quaternion rot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            rot,
+            Time.deltaTime * rotationSpeed
+        );
+    }
+
+    // ================= CHASE =================
+
     void ChasePlayer(float distance)
     {
-        if (!agent.enabled || !agent.isOnNavMesh) return;
+        RotateTowards(player.position);
 
         agent.isStopped = false;
         agent.SetDestination(player.position);
 
         if (distance <= attackRadius)
-        {
             TryAttack();
-        }
     }
+
+    // ================= ROAM =================
 
     void HandleRoaming()
     {
-        if (!agent.enabled || !agent.isOnNavMesh) return;
+        if (isAggro) return;
 
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
@@ -82,7 +131,10 @@ public class EnemySimple : MonoBehaviour
             if (roamTimer >= roamWaitTime)
             {
                 Vector3 newPos = GetRandomRoamPosition(homePosition, roamRadius);
+
+                RotateTowards(newPos);
                 agent.SetDestination(newPos);
+
                 roamTimer = 0f;
             }
         }
@@ -90,13 +142,21 @@ public class EnemySimple : MonoBehaviour
 
     Vector3 GetRandomRoamPosition(Vector3 center, float distance)
     {
-        Vector3 randomPos = Random.insideUnitSphere * distance + center;
+        for (int i = 0; i < 5; i++)
+        {
+            Vector3 random = Random.insideUnitSphere * distance;
+            random.y = 0f;
 
-        NavMeshHit hit;
-        NavMesh.SamplePosition(randomPos, out hit, distance, NavMesh.AllAreas);
+            Vector3 pos = center + random;
 
-        return hit.position;
+            if (NavMesh.SamplePosition(pos, out NavMeshHit hit, distance, NavMesh.AllAreas))
+                return hit.position;
+        }
+
+        return homePosition;
     }
+
+    // ================= ATTACK =================
 
     void TryAttack()
     {
@@ -111,29 +171,39 @@ public class EnemySimple : MonoBehaviour
         lastAttackTime = Time.time;
     }
 
-    // ✅ DAMAGE TANPA KNOCKBACK
+    // ================= DAMAGE =================
+
     public void TakeDamage(float damage)
     {
         if (isDead) return;
 
         health -= damage;
+        isAggro = true;
 
-        // Optional: efek kena hit (stop sebentar)
-        if (agent != null)
-            StartCoroutine(HitPause());
+        StartCoroutine(HitPause());
 
         if (health <= 0)
-        {
             Die();
-        }
     }
 
-    System.Collections.IEnumerator HitPause()
+    IEnumerator HitPause()
     {
-        agent.isStopped = true;
-        yield return new WaitForSeconds(0.15f);
-        agent.isStopped = false;
+        isHitPaused = true;
+
+        // 🔥 HANYA pause speed (TIDAK reset path!)
+        agent.speed = 0f;
+
+        yield return new WaitForSeconds(hitPauseDuration);
+
+        if (!isDead && agent != null && agent.enabled)
+        {
+            agent.speed = originalSpeed;
+        }
+
+        isHitPaused = false;
     }
+
+    // ================= DEATH =================
 
     void Die()
     {
@@ -148,34 +218,29 @@ public class EnemySimple : MonoBehaviour
             agent.enabled = false;
         }
 
-        Destroy(gameObject);
+        DropLoot();
+
+        Destroy(gameObject, 0.2f);
     }
 
-
+    // ================= LOOT =================
 
     void DropLoot()
     {
-        if (lootTable == null || lootTable.Length == 0)
-        {
-            Debug.Log("Loot table kosong!");
-            return;
-        }
+        if (lootTable == null) return;
 
         foreach (var loot in lootTable)
         {
             if (loot.prefab == null) continue;
 
-            float roll = Random.Range(0f, 100f);
-
-            if (roll <= loot.dropChance)
+            if (Random.Range(0f, 100f) <= loot.dropChance)
             {
-                Vector3 spawnPos = transform.position + Vector3.up * 0.5f;
-                Instantiate(loot.prefab, spawnPos, Quaternion.identity);
-
-                Debug.Log("Drop: " + loot.prefab.name);
+                Instantiate(loot.prefab, transform.position + Vector3.up * 0.5f, Quaternion.identity);
             }
         }
     }
+
+    // ================= DEBUG =================
 
     private void OnDrawGizmosSelected()
     {
@@ -186,7 +251,10 @@ public class EnemySimple : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, attackRadius);
 
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(Application.isPlaying ? homePosition : transform.position, roamRadius);
+        Gizmos.DrawWireSphere(
+            Application.isPlaying ? homePosition : transform.position,
+            roamRadius
+        );
     }
 }
 

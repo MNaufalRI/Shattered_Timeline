@@ -144,17 +144,7 @@ public class Player_Controlled_3 : MonoBehaviour
         SetGathering(true);
     }
 
-    public void FinishGathering()
-    {
-        SetGathering(false);
-        canControl = true;
 
-        if (currentGatherItem != null)
-        {
-            currentGatherItem.OnGatherFinished();
-            currentGatherItem = null;
-        }
-    }
 
     void HandleDash()
     {

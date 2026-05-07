@@ -1,5 +1,5 @@
+using StarterAssets;
 using UnityEngine;
-using UnityEngine.InputSystem; 
 
 public class PlayerInteractor : MonoBehaviour
 {
@@ -7,41 +7,81 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private float interactRange = 2.5f;
     [SerializeField] private LayerMask interactableLayer;
 
+    [Header("Animation")]
+    [SerializeField] private Animator anim;
+
+    [Header("Movement")]
+    [SerializeField] private PlayerMovement2 movement;
+
     private Interactable currentInteractable;
+    private bool isInteracting = false;
+
+    void Awake()
+    {
+        if (anim == null)
+            anim = GetComponentInChildren<Animator>();
+
+        if (movement == null)
+            movement = GetComponent<PlayerMovement2>();
+    }
 
     void Update()
     {
         FindNearestInteractable();
+    }
 
-        if (currentInteractable != null && Keyboard.current.fKey.wasPressedThisFrame)
+    public void OnInteract()
+    {
+        if (currentInteractable == null || isInteracting) return;
+
+        isInteracting = true;
+
+        if (movement != null)
+            movement.canMove = false;
+
+        anim.SetBool("isGathering", true);
+    }
+
+    public void FinishGather()
+    {
+        if (currentInteractable != null)
         {
             currentInteractable.Interact();
         }
+
+        anim.SetBool("isGathering", false);
+
+        if (movement != null)
+            movement.canMove = true;
+
+        isInteracting = false;
     }
 
     void FindNearestInteractable()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, interactRange, interactableLayer);
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            interactRange,
+            interactableLayer
+        );
 
-        if (hitColliders.Length > 0)
+        float closestDistance = Mathf.Infinity;
+        Interactable nearest = null;
+
+        foreach (var hit in hits)
         {
-            if (hitColliders[0].TryGetComponent<Interactable>(out Interactable interactable))
+            if (hit.TryGetComponent(out Interactable interactable))
             {
-                if (currentInteractable != interactable)
+                float dist = Vector3.Distance(transform.position, hit.transform.position);
+
+                if (dist < closestDistance)
                 {
-                    currentInteractable = interactable;
-                    Debug.Log("Tekan F " + currentInteractable.promptMessage);
+                    closestDistance = dist;
+                    nearest = interactable;
                 }
-                return;
             }
         }
 
-        currentInteractable = null;
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, interactRange);
+        currentInteractable = nearest;
     }
 }

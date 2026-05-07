@@ -71,13 +71,12 @@ public class PlayerControl : MonoBehaviour
     {
         if (target == null) return;
 
-        Vector3 targetPos = target.position;
-        FaceThis(targetPos);
+        Vector3 dir = (transform.position - target.position).normalized;
 
-        Vector3 finalPos = Vector3.MoveTowards(targetPos, transform.position, 1.4f);
-
+        Vector3 finalPos = target.position + dir * 1.4f;
         finalPos.y = transform.position.y;
 
+        FaceThis(target.position);
         transform.DOMove(finalPos, 0.2f);
     }
 

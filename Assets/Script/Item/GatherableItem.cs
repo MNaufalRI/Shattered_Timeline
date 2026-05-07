@@ -9,7 +9,7 @@ public class GatherableItem : Interactable
     [Header("Gathering Settings")]
     public string itemName = "Tanaman Herbal";
 
-    private bool isGathering = false;
+    private bool isGathered = false;
 
     void Start()
     {
@@ -18,24 +18,16 @@ public class GatherableItem : Interactable
 
     public override void Interact()
     {
-        if (isGathering) return;
+        if (isGathered) return;
 
-        Player_Controlled_3 player = FindFirstObjectByType<Player_Controlled_3>();
-        if (player == null) return;
+        isGathered = true;
 
-        isGathering = true;
-
-        player.StartGathering(this);
-
-        Debug.Log("Mulai gathering...");
-    }
-
-    public void OnGatherFinished()
-    {
         if (InventoryManager.Instance != null && itemData != null)
         {
             InventoryManager.Instance.Add(itemData);
         }
+
+        Debug.Log("Item diambil: " + itemName);
 
         Destroy(gameObject);
     }
