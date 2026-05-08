@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using StarterAssets; 
+using StarterAssets;
 
 public class TargetDetectionControl : MonoBehaviour
 {
@@ -9,7 +9,7 @@ public class TargetDetectionControl : MonoBehaviour
 
     [Header("Components")]
     public PlayerControl playerControl;
-    [SerializeField] private StarterAssetsInputs input; 
+    [SerializeField] private StarterAssetsInputs input;
 
     [Header("Scene")]
     public List<Transform> allTargetsInScene = new List<Transform>();
@@ -32,7 +32,8 @@ public class TargetDetectionControl : MonoBehaviour
     void Start()
     {
         PopulateTargetInScene();
-        StartCoroutine(RunEveryXms());
+
+        // StartCoroutine(RunEveryXms()); // <-- Dihapus agar tidak mendeteksi secara otomatis
 
         if (input == null)
             input = GetComponent<StarterAssetsInputs>();
@@ -51,41 +52,40 @@ public class TargetDetectionControl : MonoBehaviour
             Debug.Log("Targets found: " + allTargetsInScene.Count);
     }
 
-    private IEnumerator RunEveryXms()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(0.1f);
-            GetEnemyInInputDirection();
-        }
-    }
-
-    public void GetEnemyInInputDirection()
+    // Fungsi ini diganti namanya dan sekarang hanya dieksekusi jika dipanggil dari script lain (saat klik kiri)
+    public void LockOnToTarget()
     {
         if (!canChangeTarget) return;
 
-        Vector3 inputDirection = new Vector3(input.move.x, 0, input.move.y);
+        Vector3 direction;
 
-        if (inputDirection.sqrMagnitude < 0.01f)
-            return;
+        // Jika player sedang memberikan input pergerakan (WASD/Analog)
+        if (input != null && new Vector2(input.move.x, input.move.y).sqrMagnitude > 0.01f)
+        {
+            direction = new Vector3(input.move.x, 0, input.move.y);
+            direction = Camera.main.transform.TransformDirection(direction);
+        }
+        else
+        {
+            // Fallback: Jika diam di tempat, cari musuh sesuai arah hadap karakter
+            direction = transform.forward;
+        }
 
-        inputDirection = Camera.main.transform.TransformDirection(inputDirection);
-        inputDirection.y = 0;
-        inputDirection.Normalize();
+        direction.y = 0;
+        direction.Normalize();
 
-        Transform closestEnemy = GetClosestEnemyInDirection(inputDirection);
+        Transform closestEnemy = GetClosestEnemyInDirection(direction);
 
-        if (closestEnemy != null &&
-            Vector3.Distance(transform.position, closestEnemy.position) <= detectionRange)
+        if (closestEnemy != null && Vector3.Distance(transform.position, closestEnemy.position) <= detectionRange)
         {
             playerControl.ChangeTarget(closestEnemy);
 
             if (debug)
-                Debug.Log("Target: " + closestEnemy.name);
+                Debug.Log("Target Locked: " + closestEnemy.name);
         }
     }
 
-    Transform GetClosestEnemyInDirection(Vector3 inputDirection)
+    Transform GetClosestEnemyInDirection(Vector3 direction)
     {
         Transform closestEnemy = null;
         float maxDot = dotProductThreshold;
@@ -95,7 +95,7 @@ public class TargetDetectionControl : MonoBehaviour
             if (enemy == null) continue;
 
             Vector3 dir = (enemy.position - transform.position).normalized;
-            float dot = Vector3.Dot(inputDirection, dir);
+            float dot = Vector3.Dot(direction, dir);
 
             if (dot > maxDot)
             {

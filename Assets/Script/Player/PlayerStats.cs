@@ -1,5 +1,8 @@
-using UnityEngine;
+using StarterAssets;
 using System.Collections;
+using UnityEngine;
+
+
 
 public class PlayerStats : MonoBehaviour
 {
@@ -32,7 +35,7 @@ public class PlayerStats : MonoBehaviour
     public bool IsDead() => isDead;
     private float beatTimer = 0f;
 
-    private Player_Controlled_3 controller;
+    private PlayerMovement2 controller;
 
     void Awake()
     {
@@ -40,17 +43,19 @@ public class PlayerStats : MonoBehaviour
         currentMana = maxMana;
 
         anim = GetComponentInChildren<Animator>();
-        controller = GetComponent<Player_Controlled_3>();
+        controller = GetComponent<PlayerMovement2>();
     }
 
     void Start()
     {
         UpdateUI();
+
     }
 
     void Update()
     {
         UpdateHeartBeat();
+        RegenMana();
     }
 
     void UpdateUI()
@@ -129,6 +134,18 @@ public class PlayerStats : MonoBehaviour
         UpdateUI();
     }
 
+    void RegenMana()
+    {
+        // Cek jika mana belum penuh dan player tidak mati
+        if (currentMana < maxMana && !isDead)
+        {
+            // Menambah 1 mana per detik (1 * Time.deltaTime)
+            currentMana += 0.5f * Time.deltaTime;
+            currentMana = Mathf.Clamp(currentMana, 0, maxMana);
+            UpdateUI();
+        }
+    }
+
     // ================= DEATH =================
 
     void PlayerDie()
@@ -141,7 +158,7 @@ public class PlayerStats : MonoBehaviour
             anim.SetTrigger("Die");
 
         if (controller != null)
-            controller.canControl = false;
+            controller.canMove = false;
 
         Debug.Log("Player Mati");
 
@@ -173,7 +190,7 @@ public class PlayerStats : MonoBehaviour
         isDead = false;
 
         if (controller != null)
-            controller.canControl = true;
+            controller.canMove = true;
 
         if (anim != null)
         {

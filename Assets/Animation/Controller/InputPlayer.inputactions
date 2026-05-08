@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "name": "StarterAssets",
+    "name": "InputPlayer",
     "maps": [
         {
             "name": "Player",
@@ -34,7 +34,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Attack",
+                    "name": "QuickAttack",
                     "type": "Button",
                     "id": "021ac1d1-e0d4-429e-b15b-eb6620100f44",
                     "expectedControlType": "",
@@ -43,9 +43,18 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "HeavyAttack",
+                    "name": "Skill1",
                     "type": "Button",
                     "id": "44f379d2-be48-4af6-9c0d-2dc03778680d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Skill2",
+                    "type": "Button",
+                    "id": "7761906c-534c-48fe-b80a-a26e0298b27b",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -55,6 +64,15 @@
                     "name": "Interact",
                     "type": "Button",
                     "id": "d3546a1e-745a-4a02-ba8c-13ec009c984a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SelectTarget",
+                    "type": "Button",
+                    "id": "888ac4d5-d5b4-430a-bb46-d5b791fbc26f",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -223,18 +241,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Attack",
+                    "action": "QuickAttack",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "b883cc8b-1c37-4c81-8319-3c0e561e7be6",
-                    "path": "<Mouse>/rightButton",
+                    "path": "<Keyboard>/1",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "HeavyAttack",
+                    "action": "Skill1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -246,6 +264,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e38f881f-ef0b-4ac1-8d4b-b3c1efcbd146",
+                    "path": "<Keyboard>/2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Skill2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0b2a9f52-d821-488a-8804-c60af5e7fa20",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SelectTarget",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
