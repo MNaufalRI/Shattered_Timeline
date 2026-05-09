@@ -24,6 +24,9 @@ public class EnemySimple : MonoBehaviour
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
 
+    [Tooltip("Jarak agar musuh berhenti di depan player, bukan di tengahnya")]
+    public float stoppingDistanceOffset = 1.2f;
+
     private Transform player;
     private NavMeshAgent agent;
 
@@ -112,7 +115,9 @@ public class EnemySimple : MonoBehaviour
         RotateTowards(player.position);
 
         agent.isStopped = false;
-        agent.SetDestination(player.position);
+        Vector3 dirFromPlayer = (transform.position - player.position).normalized;
+        Vector3 stopPos = player.position + (dirFromPlayer * stoppingDistanceOffset);
+        agent.SetDestination(stopPos);
 
         if (distance <= attackRadius)
             TryAttack();
@@ -189,8 +194,6 @@ public class EnemySimple : MonoBehaviour
     IEnumerator HitPause()
     {
         isHitPaused = true;
-
-        // 🔥 HANYA pause speed (TIDAK reset path!)
         agent.speed = 0f;
 
         yield return new WaitForSeconds(hitPauseDuration);

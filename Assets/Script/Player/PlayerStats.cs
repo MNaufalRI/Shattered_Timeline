@@ -27,6 +27,9 @@ public class PlayerStats : MonoBehaviour
     public Transform spawnPoint;
     public float respawnDelay = 2f;
 
+    [Header("Status Effects")]
+    public bool isStunned = false;
+
     [SerializeField] ScreenFader fader;
     [SerializeField] private Animator heartAnim;
 
@@ -56,6 +59,7 @@ public class PlayerStats : MonoBehaviour
     {
         UpdateHeartBeat();
         RegenMana();
+        RegenHealth();
     }
 
     void UpdateUI()
@@ -136,12 +140,20 @@ public class PlayerStats : MonoBehaviour
 
     void RegenMana()
     {
-        // Cek jika mana belum penuh dan player tidak mati
         if (currentMana < maxMana && !isDead)
         {
-            // Menambah 1 mana per detik (1 * Time.deltaTime)
             currentMana += 0.5f * Time.deltaTime;
             currentMana = Mathf.Clamp(currentMana, 0, maxMana);
+            UpdateUI();
+        }
+    }
+
+    void RegenHealth()
+    {
+        if (currentHealth < maxHealth && !isDead)
+        {
+            currentHealth += 0.2f * Time.deltaTime;
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
             UpdateUI();
         }
     }
@@ -200,5 +212,37 @@ public class PlayerStats : MonoBehaviour
 
         if (fader != null)
             yield return StartCoroutine(fader.FadeIn());
+    }
+
+    // ================= STUN =================
+
+    public void ApplyStun(float duration)
+    {
+        // Jangan di-stun kalau sudah mati atau sedang invincible
+        if (isDead || isInvincible) return;
+
+        StartCoroutine(StunRoutine(duration));
+    }
+
+    private IEnumerator StunRoutine(float duration)
+    {
+        isStunned = true;
+
+        // Matikan pergerakan
+        if (controller != null) controller.canMove = false;
+
+        // Opsional: Jika kamu punya animasi Stun pusing-pusing, panggil di sini
+        // if (anim != null) anim.SetTrigger("Stun");
+
+        Debug.Log("<color=cyan>Player terkena STUN selama " + duration + " detik!</color>");
+
+        yield return new WaitForSeconds(duration);
+
+        isStunned = false;
+
+        // Nyalakan pergerakan kembali (tapi pastikan player tidak mati saat sedang di-stun)
+        if (!isDead && controller != null) controller.canMove = true;
+
+        Debug.Log("<color=cyan>Efek STUN selesai!</color>");
     }
 }

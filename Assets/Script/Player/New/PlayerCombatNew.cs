@@ -11,6 +11,7 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] private PlayerMovement2 thirdPersonController;
 
     private PlayerStats playerStats;
+    private StarterAssetsInputs _inputs;
 
     [Header("Combat")]
     public Transform target;
@@ -23,13 +24,31 @@ public class PlayerControl : MonoBehaviour
 
     [Header("Auto Approach (Kejar Musuh)")]
     public float autoWalkSpeed = 5f;
+    public float autoSprintSpeed = 8f;
     public float strikeRange = 1.5f;
+    private bool isSprinting => _inputs != null && _inputs.sprint;
 
     [Header("Skill Settings")]
-    public float skill1ManaCost = 5f; // Konsumsi 5 mana
-    public float skill2ManaCost = 10f; // Konsumsi 10 mana
-    public float skill1Cooldown = 5f; // Cooldown 5 detik
-    public float skill2Cooldown = 10f; // Cooldown 10 detik
+    public float skill1ManaCost = 5f; 
+    public float skill2ManaCost = 10f;
+    public float skill1Cooldown = 5f;
+    public float skill2Cooldown = 10f; 
+    public float skill1Range = 3f; 
+    public float skill2Range = 5f; 
+
+    [Header("Radius Visualizer")]
+    public LineRenderer radiusVisualizer;
+    public int circleSegments = 50; 
+
+    [Header("Dash Settings")]
+    [SerializeField] private TrailRenderer trailRenderer;
+    public float dashForce = 20f;
+    public float dashTime = 0.2f;
+    public float dashCooldown = 1f;
+    private bool canDash = true;
+
+    [Header("VFX References")]
+    [SerializeField] private MeshTrail meshTrail;
 
     private float skill1Timer = 0f;
     private float skill2Timer = 0f;
@@ -38,16 +57,31 @@ public class PlayerControl : MonoBehaviour
     private bool isApproaching = false;
     private Coroutine approachCoroutine;
 
+    [Header("Weapon & Damage Scaling")]
+    public DamageDealer weaponDamageDealer;
+
+    [Range(0f, 3f)] public float quickAttackMultiplier = 1.0f; 
+    [Range(0f, 3f)] public float skill1Multiplier = 1.8f;     
+    [Range(0f, 3f)] public float skill2Multiplier = 1.2f;    
+
+    private float currentMultiplier = 1.0f;
+
+    [Tooltip("Jarak aman agar player berhenti di 'kulit' musuh, bukan di tengah badannya")]
+    public float enemyBodyRadius = 1.2f;
+
+
     void Awake()
     {
-        playerStats = GetComponent<PlayerStats>(); // Menghubungkan PlayerStats
+        playerStats = GetComponent<PlayerStats>();
+        _inputs = GetComponent<StarterAssetsInputs>();
     }
 
     void Update()
     {
-        // Update timer cooldown setiap frame
         if (skill1Timer > 0) skill1Timer -= Time.deltaTime;
         if (skill2Timer > 0) skill2Timer -= Time.deltaTime;
+
+
     }
 
     // --- FUNGSI INPUT SEND MESSAGES ---
@@ -63,7 +97,7 @@ public class PlayerControl : MonoBehaviour
 
     public void OnQuickAttack(InputValue value)
     {
-        if (value.isPressed && playerStats != null && !playerStats.IsDead())
+        if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
             Attack(0);
         }
@@ -71,21 +105,19 @@ public class PlayerControl : MonoBehaviour
 
     public void OnSkill1(InputValue value)
     {
-        if (value.isPressed && playerStats != null && !playerStats.IsDead())
+        if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
-            // Cek cooldown sebelum memulai serangan
             if (skill1Timer <= 0) Attack(1);
-            else Debug.Log("Skill 1 sedang Cooldown: " + Mathf.Ceil(skill1Timer) + " detik");
+            else Debug.Log("Skill 1 sedang Cooldown");
         }
     }
 
     public void OnSkill2(InputValue value)
     {
-        if (value.isPressed && playerStats != null && !playerStats.IsDead())
+        if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
-            // Cek cooldown sebelum memulai serangan
             if (skill2Timer <= 0) Attack(2);
-            else Debug.Log("Skill 2 sedang Cooldown: " + Mathf.Ceil(skill2Timer) + " detik");
+            else Debug.Log("Skill 2 sedang Cooldown");
         }
     }
 
@@ -100,7 +132,6 @@ public class PlayerControl : MonoBehaviour
 
         if (isAttacking) return;
 
-        // Cek apakah mana mencukupi sebelum masuk ke animasi
         if (attackState == 1 && playerStats.currentMana < skill1ManaCost) return;
         if (attackState == 2 && playerStats.currentMana < skill2ManaCost) return;
 
@@ -150,35 +181,41 @@ public class PlayerControl : MonoBehaviour
         isAttacking = true;
         isApproaching = true;
 
+        SetActiveRadius(strikeRange);
+
         while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > strikeRange)
         {
-            if (!isApproaching) yield break;
+            if (!isApproaching)
+            {
+                HideRadius();
+                yield break;
+            }
             FaceThis(targetNode.position);
-            anim.SetFloat("Speed", autoWalkSpeed);
-            anim.SetFloat("MotionSpeed", 1f);
-            float step = autoWalkSpeed * Time.deltaTime;
+
+            float currentMoveSpeed = isSprinting ? autoSprintSpeed : autoWalkSpeed;
+
+            anim.SetFloat("Speed", currentMoveSpeed);
+            anim.SetFloat("MotionSpeed", isSprinting ? 1.5f : 1f);
+            float step = currentMoveSpeed * Time.deltaTime;
+
             Vector3 targetPos = new Vector3(targetNode.position.x, transform.position.y, targetNode.position.z);
             transform.position = Vector3.MoveTowards(transform.position, targetPos, step);
             yield return null;
         }
 
+        HideRadius();
         isApproaching = false;
         anim.SetFloat("Speed", 0f);
 
-        if (targetNode != null)
-        {
-            ExecuteQuickAttackAnim(attackIndex);
-        }
-        else
-        {
-            ResetAttack();
-        }
+        if (targetNode != null) ExecuteQuickAttackAnim(attackIndex);
+        else ResetAttack();
     }
 
     void CancelApproach()
     {
         isApproaching = false;
         anim.SetFloat("Speed", 0f);
+        HideRadius(); 
         if (approachCoroutine != null) StopCoroutine(approachCoroutine);
         ResetAttack();
     }
@@ -186,6 +223,7 @@ public class PlayerControl : MonoBehaviour
     void ExecuteQuickAttackAnim(int attackIndex)
     {
         isAttacking = true;
+        currentMultiplier = quickAttackMultiplier; 
         switch (attackIndex)
         {
             case 1: MoveTowardsTarget(target.position, quickAttackDeltaDistance, "punch"); break;
@@ -198,18 +236,16 @@ public class PlayerControl : MonoBehaviour
     {
         if (target == null) { ResetAttack(); return; }
 
-        // Konsumsi Mana dan pasang Cooldown
-        if (playerStats != null && playerStats.UseMana(skill1ManaCost))
+        float distance = Vector3.Distance(transform.position, target.position);
+
+        if (distance > skill1Range)
         {
-            skill1Timer = skill1Cooldown;
-            FaceThis(target.position);
-            anim.SetBool("heavyAttack1", true);
-            isAttacking = true;
+            if (approachCoroutine != null) StopCoroutine(approachCoroutine);
+            approachCoroutine = StartCoroutine(ApproachAndCastSkill(target, 1, skill1Range));
         }
         else
         {
-            Debug.Log("Mana tidak cukup untuk Skill 1");
-            ResetAttack();
+            ExecuteSkill1(); 
         }
     }
 
@@ -217,18 +253,16 @@ public class PlayerControl : MonoBehaviour
     {
         if (target == null) { ResetAttack(); return; }
 
-        // Konsumsi Mana dan pasang Cooldown
-        if (playerStats != null && playerStats.UseMana(skill2ManaCost))
+        float distance = Vector3.Distance(transform.position, target.position);
+
+        if (distance > skill2Range)
         {
-            skill2Timer = skill2Cooldown;
-            FaceThis(target.position);
-            anim.SetBool("heavyAttack2", true);
-            isAttacking = true;
+            if (approachCoroutine != null) StopCoroutine(approachCoroutine);
+            approachCoroutine = StartCoroutine(ApproachAndCastSkill(target, 2, skill2Range));
         }
         else
         {
-            Debug.Log("Mana tidak cukup untuk Skill 2");
-            ResetAttack();
+            ExecuteSkill2();
         }
     }
 
@@ -240,6 +274,92 @@ public class PlayerControl : MonoBehaviour
     public float Skill2Timer
     {
         get { return skill2Timer; }
+    }
+
+    void ExecuteSkill1()
+    {
+        if (playerStats != null && playerStats.UseMana(skill1ManaCost))
+        {
+            skill1Timer = skill1Cooldown;
+            currentMultiplier = skill1Multiplier;
+            FaceThis(target.position);
+            anim.SetBool("heavyAttack1", true);
+            isAttacking = true;
+        }
+        else { ResetAttack(); }
+    }
+
+    void ExecuteSkill2()
+    {
+        if (playerStats != null && playerStats.UseMana(skill2ManaCost))
+        {
+            skill2Timer = skill2Cooldown;
+            currentMultiplier = skill2Multiplier;
+            FaceThis(target.position);
+            anim.SetBool("heavyAttack2", true);
+            isAttacking = true;
+        }
+        else { ResetAttack(); }
+    }
+
+    IEnumerator ApproachAndCastSkill(Transform targetNode, int skillIndex, float range)
+    {
+        isAttacking = true;
+        isApproaching = true;
+        SetActiveRadius(range);
+
+        while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > range)
+        {
+            if (!isApproaching) { HideRadius(); yield break; }
+
+            FaceThis(targetNode.position);
+
+            float currentMoveSpeed = isSprinting ? autoSprintSpeed : autoWalkSpeed;
+            anim.SetFloat("Speed", currentMoveSpeed);
+            anim.SetFloat("MotionSpeed", isSprinting ? 1.5f : 1f);
+
+            float step = currentMoveSpeed * Time.deltaTime;
+            Vector3 targetPos = new Vector3(targetNode.position.x, transform.position.y, targetNode.position.z);
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, step);
+            yield return null;
+        }
+
+        HideRadius();
+        isApproaching = false;
+        anim.SetFloat("Speed", 0f);
+
+        if (targetNode != null)
+        {
+            if (skillIndex == 1) ExecuteSkill1();
+            else if (skillIndex == 2) ExecuteSkill2();
+        }
+        else ResetAttack();
+    }
+
+    private void SetActiveRadius(float radius)
+    {
+        if (radiusVisualizer == null) return;
+
+        radiusVisualizer.enabled = true;
+        radiusVisualizer.positionCount = circleSegments + 1;
+        radiusVisualizer.useWorldSpace = false; 
+
+        float angle = 0f;
+        for (int i = 0; i < circleSegments + 1; i++)
+        {
+            float x = Mathf.Sin(Mathf.Deg2Rad * angle) * radius;
+            float z = Mathf.Cos(Mathf.Deg2Rad * angle) * radius;
+            radiusVisualizer.SetPosition(i, new Vector3(x, 0.1f, z));
+            angle += (360f / circleSegments);
+        }
+    }
+
+    private void HideRadius()
+    {
+        if (radiusVisualizer != null)
+        {
+            radiusVisualizer.enabled = false;
+        }
     }
 
     public void ResetAttack()
@@ -258,22 +378,25 @@ public class PlayerControl : MonoBehaviour
 
         isAttacking = false;
         isApproaching = false;
+        HideRadius();
 
         if (approachCoroutine != null) StopCoroutine(approachCoroutine);
     }
 
-    public void PerformAttack()
+    public void EnableWeaponHitbox()
     {
-        if (playerStats != null && playerStats.IsDead()) return;
-
-        Collider[] enemies = Physics.OverlapSphere(attackPos.position, attackRange, enemyLayer);
-        foreach (var enemy in enemies)
+        if (weaponDamageDealer != null && playerStats != null)
         {
-            EnemySimple enemySimple = enemy.GetComponent<EnemySimple>();
-            if (enemySimple != null) enemySimple.TakeDamage(playerStats.attackDamage); // Gunakan damage dari stats
+            float finalDamage = playerStats.attackDamage * currentMultiplier;
+            weaponDamageDealer.StartDealDamage(finalDamage);
+        }
+    }
 
-            EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
-            if (enemyBase != null) enemyBase.OnHit();
+    public void DisableWeaponHitbox()
+    {
+        if (weaponDamageDealer != null)
+        {
+            weaponDamageDealer.EndDealDamage();
         }
     }
 
@@ -281,8 +404,12 @@ public class PlayerControl : MonoBehaviour
     {
         anim.SetBool(animName, true);
         FaceThis(target_);
-        Vector3 finalPos = Vector3.MoveTowards(transform.position, target_, deltaDistance);
+
+        Vector3 directionToPlayer = (transform.position - target_).normalized;
+        Vector3 outerEdgePos = target_ + (directionToPlayer * enemyBodyRadius);
+        Vector3 finalPos = Vector3.MoveTowards(transform.position, outerEdgePos, deltaDistance);
         finalPos.y = transform.position.y;
+
         transform.DOMove(finalPos, reachTime);
     }
 
@@ -317,10 +444,60 @@ public class PlayerControl : MonoBehaviour
     public void GetClose()
     {
         if (target == null) return;
-        Vector3 dir = (transform.position - target.position).normalized;
-        Vector3 finalPos = target.position + dir * 1.4f;
+
+        Vector3 dirToPlayer = (transform.position - target.position).normalized;
+
+        Vector3 finalPos = target.position + (dirToPlayer * enemyBodyRadius);
         finalPos.y = transform.position.y;
+
         FaceThis(target.position);
         transform.DOMove(finalPos, 0.2f);
+    }
+
+    public void OnDash(InputValue value)
+    {
+        if (value.isPressed && canDash && !playerStats.IsDead() && !playerStats.isStunned)
+        {
+            if (isApproaching)
+            {
+                CancelApproach();
+            }
+
+            if (!isAttacking || isApproaching)
+            {
+                StartCoroutine(DashRoutine());
+            }
+        }
+    }
+
+    private IEnumerator DashRoutine()
+    {
+        canDash = false;
+        isAttacking = true;
+
+        if (anim != null) anim.SetTrigger("Dash");
+
+        if (meshTrail != null) meshTrail.SetTrailActive(true);
+        if (playerStats != null) playerStats.isInvincible = true;
+
+        if (thirdPersonController != null) thirdPersonController.canMove = false;
+
+        Vector3 dashDir = transform.forward;
+        float startTime = Time.time;
+
+        while (Time.time < startTime + dashTime)
+        {
+            transform.position += dashDir * dashForce * Time.deltaTime;
+            yield return null;
+        }
+
+        if (meshTrail != null) meshTrail.SetTrailActive(false);
+        if (playerStats != null) playerStats.isInvincible = false;
+        isAttacking = false;
+
+        if (thirdPersonController != null) thirdPersonController.canMove = true;
+
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
     }
 }

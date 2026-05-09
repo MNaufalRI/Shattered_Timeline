@@ -349883,7 +349883,14 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.48333332
-    functionName: PerformAttack
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.6333333
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -349897,7 +349904,14 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.6666667
-    functionName: PerformAttack
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.8
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -349911,7 +349925,14 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 0.8333333
-    functionName: PerformAttack
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.98333335
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -349925,7 +349946,14 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 1.0166667
-    functionName: PerformAttack
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.15
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -349939,7 +349967,14 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 1.1833333
-    functionName: PerformAttack
+    functionName: EnableWeaponHitbox
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.3833333
+    functionName: DisableWeaponHitbox
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

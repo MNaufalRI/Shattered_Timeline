@@ -290,13 +290,14 @@ MonoBehaviour:
     dropChance: 100
   health: 50
   detectionRadius: 10
-  attackRadius: 1.5
+  attackRadius: 1.6
   attackCooldown: 1.5
   damageAmount: 10
   roamRadius: 5
   roamWaitTime: 3
   hitPauseDuration: 0.8
   rotationSpeed: 10
+  stoppingDistanceOffset: 1.5
 --- !u!195 &-21801530316621916
 NavMeshAgent:
   m_ObjectHideFlags: 0
