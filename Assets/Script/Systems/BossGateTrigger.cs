@@ -9,22 +9,16 @@ public class BossGateTrigger : MonoBehaviour
     // Fungsi ini terpanggil otomatis saat ada Collider yang menyentuh zona Is Trigger
     private void OnTriggerEnter(Collider other)
     {
-        // Pastikan HANYA Player yang bisa memicu perpindahan scene (bukan musuh atau proyektil)
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Player menyentuh gerbang! Memulai transisi ke: " + bossSceneName);
-
-            // Mencari skrip GameSettings di scene saat ini
-            GameSettings gameSettings = FindObjectOfType<GameSettings>();
-
-            if (gameSettings != null)
+            // Langsung panggil LoadingManager yang sudah jadi Singleton
+            if (LoadingManager.Instance != null)
             {
-                // Memanggil fungsi TravelToBoss yang berisi Auto-Save dan Fade Out
-                gameSettings.TravelToBoss(bossSceneName);
+                LoadingManager.Instance.LoadScene(bossSceneName); //
             }
             else
             {
-                Debug.LogError("Gagal: Skrip GameSettings tidak ditemukan di scene ini!");
+                Debug.LogError("LoadingManager tidak ditemukan! Pastikan sudah ada di scene awal.");
             }
         }
     }

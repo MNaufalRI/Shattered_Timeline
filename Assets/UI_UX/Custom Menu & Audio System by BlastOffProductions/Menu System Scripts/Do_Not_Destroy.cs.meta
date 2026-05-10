@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 0a31c19e3b1084b999d1acedbc22ee70
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330923
+  packageName: Custom Menu & Audio System
+  packageVersion: 1.0
+  assetPath: Assets/Custom Menu & Audio System by BlastOffProductions/Menu System
+    Scripts/Do_Not_Destroy.cs
+  uploadId: 783398

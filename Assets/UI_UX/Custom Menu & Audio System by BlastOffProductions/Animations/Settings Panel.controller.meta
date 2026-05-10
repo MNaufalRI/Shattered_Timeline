@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 39c455b2c65994cd2ba5ecc338c7cafd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330923
+  packageName: Custom Menu & Audio System
+  packageVersion: 1.0
+  assetPath: Assets/Custom Menu & Audio System by BlastOffProductions/Animations/Settings
+    Panel.controller
+  uploadId: 783398

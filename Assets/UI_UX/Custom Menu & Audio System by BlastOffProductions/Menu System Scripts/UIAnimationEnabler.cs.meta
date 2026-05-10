@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: d84bec1f9392c4d3a9734b6c05ae0eb8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330923
+  packageName: Custom Menu & Audio System
+  packageVersion: 1.0
+  assetPath: Assets/Custom Menu & Audio System by BlastOffProductions/Menu System
+    Scripts/UIAnimationEnabler.cs
+  uploadId: 783398

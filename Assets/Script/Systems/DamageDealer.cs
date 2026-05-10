@@ -4,58 +4,50 @@ using UnityEngine;
 public class DamageDealer : MonoBehaviour
 {
     bool canDealDamage;
-    List<GameObject> hasDealtDamage;
+    List<GameObject> hasDealtDamage = new List<GameObject>();
 
+    [Header("Settings")]
     [SerializeField] float weaponLength = 1.5f;
-    [SerializeField] LayerMask enemyLayer; // Lebih baik pakai ini daripada hardcode "1 << 9"
+    [SerializeField] LayerMask enemyLayer;
 
     private float currentDamage;
 
-    void Start()
-    {
-        canDealDamage = false;
-        hasDealtDamage = new List<GameObject>();
-    }
+    void Start() => canDealDamage = false;
 
     void Update()
     {
         if (canDealDamage)
         {
             RaycastHit hit;
-            // Memancarkan raycast mengikuti panjang pedang
             if (Physics.Raycast(transform.position, -transform.up, out hit, weaponLength, enemyLayer))
             {
-                if (!hasDealtDamage.Contains(hit.transform.gameObject))
+                GameObject targetObj = hit.transform.gameObject;
+
+                if (!hasDealtDamage.Contains(targetObj))
                 {
-                    // Berikan damage ke musuh (Sesuaikan dengan script kamu)
-                    EnemySimple enemySimple = hit.transform.GetComponent<EnemySimple>();
-                    if (enemySimple != null) enemySimple.TakeDamage(currentDamage);
+                    // HANYA SATU BARIS UNTUK SEMUA JENIS MUSUH
+                    IDamageable damageable = targetObj.GetComponent<IDamageable>();
 
-                    EnemyBase enemyBase = hit.transform.GetComponent<EnemyBase>();
-                    if (enemyBase != null) enemyBase.OnHit();
-
-                    if (enemySimple != null || enemyBase != null)
+                    if (damageable != null)
                     {
-                        hasDealtDamage.Add(hit.transform.gameObject);
-                        Debug.Log($"Hit musuh dengan damage: {currentDamage}");
+                        damageable.TakeDamage(currentDamage);
+
+                        hasDealtDamage.Add(targetObj);
+                        Debug.Log($"<color=cyan>Interface Hit: {targetObj.name} | Damage: {currentDamage}</color>");
                     }
                 }
             }
         }
     }
 
-    // Fungsi ini sekarang meminta parameter finalDamage dari Player
     public void StartDealDamage(float finalDamage)
     {
         canDealDamage = true;
         currentDamage = finalDamage;
-        hasDealtDamage.Clear(); // Kosongkan daftar agar bisa nge-hit lagi di ayunan berikutnya
+        hasDealtDamage.Clear();
     }
 
-    public void EndDealDamage()
-    {
-        canDealDamage = false;
-    }
+    public void EndDealDamage() => canDealDamage = false;
 
     private void OnDrawGizmos()
     {

@@ -2,7 +2,7 @@
 using UnityEngine.AI;
 using System.Collections;
 
-public class EnemySimple : MonoBehaviour
+public class EnemySimple : MonoBehaviour, IDamageable
 {
     [Header("Loot Settings")]
     public LootItem[] lootTable;
@@ -165,12 +165,28 @@ public class EnemySimple : MonoBehaviour
 
     void TryAttack()
     {
-        if (Time.time < lastAttackTime + attackCooldown) return;
+        // Jangan menyerang jika: Sedang cooldown, sedang HitPause, atau sudah mati
+        if (Time.time < lastAttackTime + attackCooldown || isHitPaused || isDead) return;
 
+        // 1. Hadap player dengan tegas saat memukul
+        RotateTowards(player.position);
+
+
+        // 3. Berikan Kerusakan ke Player (Jembatan ke Eliot)
         PlayerStats pStats = player.GetComponent<PlayerStats>();
         if (pStats != null)
         {
-            pStats.TakeDamage(damageAmount);
+            pStats.TakeDamage(damageAmount); // Ini akan memanggil ResourceAction Eliot
+            Debug.Log($"<color=orange>[Enemy]</color> Berhasil memukul Player! Damage: {damageAmount}");
+        }
+        else
+        {
+            // Fail-safe: Jika PlayerStats tidak ditemukan, coba cari AgentResources langsung
+            var eliotRes = player.GetComponent<Eliot.AgentComponents.AgentResources>();
+            if (eliotRes != null)
+            {
+                eliotRes.Action(new Eliot.AgentComponents.ResourceAction("Health", Eliot.AgentComponents.ResourceAffectionWay.Reduce, Mathf.RoundToInt(damageAmount)));
+            }
         }
 
         lastAttackTime = Time.time;
@@ -178,11 +194,11 @@ public class EnemySimple : MonoBehaviour
 
     // ================= DAMAGE =================
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float amount)
     {
         if (isDead) return;
 
-        health -= damage;
+        health -= amount;
         isAggro = true;
 
         StartCoroutine(HitPause());

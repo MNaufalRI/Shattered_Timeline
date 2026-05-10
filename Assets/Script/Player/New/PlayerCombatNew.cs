@@ -69,6 +69,11 @@ public class PlayerControl : MonoBehaviour
     [Tooltip("Jarak aman agar player berhenti di 'kulit' musuh, bukan di tengah badannya")]
     public float enemyBodyRadius = 1.2f;
 
+    [Header("Potion System")]
+    public int maxPotionCharges = 3;
+    private int currentPotionCharges = 3;
+    [SerializeField] private Animator potionAnimator;
+
 
     void Awake()
     {
@@ -78,10 +83,25 @@ public class PlayerControl : MonoBehaviour
 
     void Update()
     {
+        if (playerStats != null && playerStats.IsDead())
+        {
+            // Hentikan paksa pergerakan/rotasi dari DOTween agar mayat tidak meluncur
+            transform.DOKill();
+
+            // Batalkan semua status nyerang/ngejar
+            if (isAttacking || isApproaching)
+            {
+                if (approachCoroutine != null) StopCoroutine(approachCoroutine);
+                isAttacking = false;
+                isApproaching = false;
+                HideRadius();
+            }
+            return; // Berhenti memproses input/timer lainnya
+        }
+
+
         if (skill1Timer > 0) skill1Timer -= Time.deltaTime;
         if (skill2Timer > 0) skill2Timer -= Time.deltaTime;
-
-
     }
 
     // --- FUNGSI INPUT SEND MESSAGES ---
@@ -120,6 +140,7 @@ public class PlayerControl : MonoBehaviour
             else Debug.Log("Skill 2 sedang Cooldown");
         }
     }
+
 
     // ----------------------------------
 
@@ -285,6 +306,7 @@ public class PlayerControl : MonoBehaviour
             FaceThis(target.position);
             anim.SetBool("heavyAttack1", true);
             isAttacking = true;
+            playerStats.isInvincible = true;
         }
         else { ResetAttack(); }
     }
@@ -298,6 +320,7 @@ public class PlayerControl : MonoBehaviour
             FaceThis(target.position);
             anim.SetBool("heavyAttack2", true);
             isAttacking = true;
+            playerStats.isInvincible = true;
         }
         else { ResetAttack(); }
     }
@@ -370,7 +393,9 @@ public class PlayerControl : MonoBehaviour
         anim.SetBool("heavyAttack1", false);
         anim.SetBool("heavyAttack2", false);
 
-        if (thirdPersonController != null)
+        if (playerStats != null) playerStats.isInvincible = false;
+
+        if (thirdPersonController != null && (playerStats == null || !playerStats.IsDead()))
         {
             thirdPersonController.canMove = true;
             thirdPersonController.enabled = true;
@@ -405,8 +430,24 @@ public class PlayerControl : MonoBehaviour
         anim.SetBool(animName, true);
         FaceThis(target_);
 
+        float dynamicRadius = enemyBodyRadius;
+        Collider targetCol = target.GetComponent<Collider>();
+
+        if (targetCol != null)
+        {
+            dynamicRadius = targetCol.bounds.extents.x + 0.5f;
+        }
+
+        float currentDistance = Vector3.Distance(transform.position, target_);
+
+        if (currentDistance <= dynamicRadius)
+        {
+            return;
+        }
+
         Vector3 directionToPlayer = (transform.position - target_).normalized;
-        Vector3 outerEdgePos = target_ + (directionToPlayer * enemyBodyRadius);
+        Vector3 outerEdgePos = target_ + (directionToPlayer * dynamicRadius);
+
         Vector3 finalPos = Vector3.MoveTowards(transform.position, outerEdgePos, deltaDistance);
         finalPos.y = transform.position.y;
 
@@ -445,9 +486,16 @@ public class PlayerControl : MonoBehaviour
     {
         if (target == null) return;
 
-        Vector3 dirToPlayer = (transform.position - target.position).normalized;
+        float dynamicRadius = enemyBodyRadius;
+        Collider targetCol = target.GetComponent<Collider>();
+        if (targetCol != null) dynamicRadius = targetCol.bounds.extents.x + 0.5f;
 
-        Vector3 finalPos = target.position + (dirToPlayer * enemyBodyRadius);
+        float currentDistance = Vector3.Distance(transform.position, target.position);
+
+        if (currentDistance <= dynamicRadius) return;
+
+        Vector3 dirToPlayer = (transform.position - target.position).normalized;
+        Vector3 finalPos = target.position + (dirToPlayer * dynamicRadius);
         finalPos.y = transform.position.y;
 
         FaceThis(target.position);
@@ -499,5 +547,33 @@ public class PlayerControl : MonoBehaviour
 
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
+    }
+
+    public void OnUsePotion(InputValue value)
+    {
+        if (value.isPressed && !playerStats.IsDead() && currentPotionCharges > 0)
+        {
+            // Opsional: Jangan pakai potion kalau darah sudah penuh
+            if (playerStats.currentHealth >= playerStats.maxHealth) return;
+
+            ExecuteUsePotion();
+        }
+    }
+
+    private void ExecuteUsePotion()
+    {
+        currentPotionCharges--;
+
+        // Panggil efek di PlayerStats
+        playerStats.ApplyPotionEffect(25f, 1f, 5f);
+
+        // Update Animator UI Potion
+        if (potionAnimator != null)
+        {
+            // Kirim integer sisa potion (3, 2, 1, atau 0) ke Animator
+            potionAnimator.SetInteger("Charges", currentPotionCharges);
+        }
+
+        Debug.Log($"<color=green>Potion digunakan! Sisa: {currentPotionCharges}</color>");
     }
 }

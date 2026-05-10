@@ -271,7 +271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4802b6c3ffafe484c80261726f35718c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBase
-  hitVfx: {fileID: 1769859112613762, guid: dd9db0ee43240764d9f4a7b599fa592a, type: 3}
+  hitVfx: {fileID: 7428353199889976217, guid: 5b4f9bd7f869abf4a827f1d8e35d7af4, type: 3}
   activeTargetObject: {fileID: 8743371947808491895}
 --- !u!114 &1539108262398544903
 MonoBehaviour:

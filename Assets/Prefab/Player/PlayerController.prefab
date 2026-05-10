@@ -73,6 +73,7 @@ GameObject:
   - component: {fileID: 7303459930650656635}
   - component: {fileID: 7723006920448470172}
   - component: {fileID: 432515012801867072}
+  - component: {fileID: 6171071157463997963}
   - component: {fileID: 6066546899415920725}
   - component: {fileID: 6538190019892418836}
   - component: {fileID: 8679055291556370894}
@@ -80,7 +81,15 @@ GameObject:
   - component: {fileID: 2875949919914028908}
   - component: {fileID: 8629840735691919706}
   - component: {fileID: 8318306095260314847}
-  - component: {fileID: 2956619882636477540}
+  - component: {fileID: 6623416894280616159}
+  - component: {fileID: 6584044552970377285}
+  - component: {fileID: 2204985878769377733}
+  - component: {fileID: 4935275170017263972}
+  - component: {fileID: 2455244435217058112}
+  - component: {fileID: 432322524115648177}
+  - component: {fileID: 4235833374108888594}
+  - component: {fileID: 2115608095411807990}
+  - component: {fileID: 7917882358974294558}
   m_Layer: 10
   m_Name: PlayerController
   m_TagString: Player
@@ -105,6 +114,9 @@ Transform:
   - {fileID: 8394752946470354712}
   - {fileID: 198335679557755328}
   - {fileID: 5016354567256117236}
+  - {fileID: 4525493477782662090}
+  - {fileID: 3016653346237311926}
+  - {fileID: 4123856079415609227}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &7723006920448470172
@@ -154,6 +166,34 @@ CharacterController:
   m_SkinWidth: 0.02
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &6171071157463997963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ad79e119b0015488c491c66044c67d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.EliotAgent
+  _aiEnabled: 1
+  _behaviour: {fileID: 0}
+  _ping: 0.1
+  wayPoints: {fileID: 0}
+  _applyChangesOnWayPoints: 1
+  _skills:
+  - {fileID: 0}
+  _activeEffects: []
+  _debugSkill: 1
+  _debugWaypoints: 1
+  _debugTarget: 1
+  _skillOrigin: {fileID: 4525493477782662090}
+  curWayPoint: {fileID: 0}
+  isDoingAction: 0
+  editorAdvancedMode: 1
+  agentType: 1
 --- !u!114 &6066546899415920725
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,6 +383,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   autoWalkSpeed: 5
+  autoSprintSpeed: 10
   strikeRange: 1.5
   skill1ManaCost: 5
   skill2ManaCost: 10
@@ -350,7 +391,7 @@ MonoBehaviour:
   skill2Cooldown: 10
   skill1Range: 8
   skill2Range: 10
-  radiusVisualizer: {fileID: 2956619882636477540}
+  radiusVisualizer: {fileID: 7917882358974294558}
   circleSegments: 50
   trailRenderer: {fileID: 0}
   dashForce: 30
@@ -361,6 +402,9 @@ MonoBehaviour:
   quickAttackMultiplier: 1
   skill1Multiplier: 2
   skill2Multiplier: 0.8
+  enemyBodyRadius: 1.2
+  maxPotionCharges: 3
+  potionAnimator: {fileID: 0}
 --- !u!114 &2875949919914028908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -373,12 +417,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8cd50379346d0947b3f8fd41fc84417, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  maxHealth: 100
-  currentHealth: 0
-  maxMana: 50
-  currentMana: 0
   isInvincible: 0
-  attackDamage: 20
+  isStunned: 0
   healthBar: {fileID: 0}
   manaBar: {fileID: 0}
   spawnPoint: {fileID: 0}
@@ -422,7 +462,270 @@ MonoBehaviour:
   shaderVarAlpha: _Alpha
   fadeRate: 0.05
   fadeRefreshRate: 0.05
---- !u!120 &2956619882636477540
+--- !u!114 &6623416894280616159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b13f6df719b7c45b1d8f0da8b9f8c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.Environment.Unit
+  _type: 0
+  _team: red
+  _friendlyTeams: []
+  attributesGroups:
+  - source: {fileID: 11400000, guid: 4eda629213b59a9468a31aeb4ae456e5, type: 2}
+    attributes:
+    - type: 2
+      name: Attack
+      boolValue: 0
+      intValue: 20
+      floatValue: 20
+      stringValue: 
+      objectValue: {fileID: 0}
+    displayAttributes: 1
+  visualizationType: 0
+  gizmosColor: {r: 1, g: 1, b: 1, a: 1}
+  visualizationBoxSize: {x: 1, y: 1, z: 1}
+  visualizationSphereRadius: 1
+--- !u!195 &6584044552970377285
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 0
+  m_AgentTypeID: 0
+  m_Radius: 0.00001
+  m_Speed: 5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 0.00001
+  m_BaseOffset: -2.12436
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &2204985878769377733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcd0ccd4a163466288d4a38219eede0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentResources
+  resourcesProfiles:
+  - source: {fileID: 11400000, guid: a5443cd46cf60e74abdcd33a749ce224, type: 2}
+    resources:
+    - name: Health
+      maxValue: 100
+      minValue: 0
+      initialValue: 100
+      replenishAmount: 0
+      replenishCooldown: 0
+      currentValue: 0
+      dieOnEmpty: 0
+      onReplenish:
+        m_PersistentCalls:
+          m_Calls: []
+      onReduce:
+        m_PersistentCalls:
+          m_Calls: []
+      onEmpty:
+        m_PersistentCalls:
+          m_Calls: []
+      onFull:
+        m_PersistentCalls:
+          m_Calls: []
+      agent: {fileID: 6171071157463997963}
+    - name: Mana
+      maxValue: 50
+      minValue: 0
+      initialValue: 50
+      replenishAmount: 0
+      replenishCooldown: 0
+      currentValue: 50
+      dieOnEmpty: 0
+      onReplenish:
+        m_PersistentCalls:
+          m_Calls: []
+      onReduce:
+        m_PersistentCalls:
+          m_Calls: []
+      onEmpty:
+        m_PersistentCalls:
+          m_Calls: []
+      onFull:
+        m_PersistentCalls:
+          m_Calls: []
+      agent: {fileID: 6171071157463997963}
+    displayResources: 1
+--- !u!114 &4935275170017263972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0519884c9197924d9ba5389b4eb6d09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentAnimation
+  _animationMode: 1
+  _animation: {fileID: 0}
+  _clips:
+    Idle: {fileID: 0}
+    Walk: {fileID: 0}
+    Run: {fileID: 0}
+    Dodge: {fileID: 0}
+    TakeDamage: {fileID: 0}
+    LoadSkill: {fileID: 0}
+    UseSkill: {fileID: 0}
+    Death: {fileID: 0}
+  _animator: {fileID: 7723006920448470172}
+  _applyRootMotion: 0
+  _rootMotionRotation: 0
+  _changeGraphicsName: 0
+  _parameters:
+    Vertical: Vertical
+    Horizontal: Horizontal
+    DodgeBool: Dodge
+    GetHitBool: GetHit
+    LoadSkillBool: LoadSkill
+    ExecuteSkillBool: Skill
+    DeathBool: Death
+--- !u!114 &2455244435217058112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5273f4e99b6b984d8953faedf11907d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentInventory
+  _maxWeight: 0
+  _items: []
+  _wieldedItem: {fileID: 0}
+  _initFromList: 0
+  _initFromChildren: 0
+  _dropRadius: 0
+--- !u!114 &432322524115648177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe633ec5c6414bd397fe754d97488af6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentMotion
+  _type: 0
+  _weight: 1
+  _walkSpeed: 5
+  _canRun: 0
+  _runSpeed: 10
+  _walkCost: []
+  _runCost: []
+  _rotationSpeed: 10
+  _canDodge: 0
+  _dodgeSpeed: 10
+  _dodgeDelay: 0
+  _dodgeCoolDown: 2
+  _dodgeDuration: 0.1
+  _patrolTime: 5
+  _walkingStepSounds: []
+  _walkingStepPing: 0.5
+  _runningStepSounds: []
+  _runningStepPing: 0.2
+  _dodgeSounds: []
+  _head: {fileID: 0}
+  _idleRotationSpeed: 0
+  _clampIdleRotation: 0
+  _clampedIdleRotStart: 0
+  _clampedIdleRotEnd: 0
+  _debug: 0
+  initialPosition: {x: 528.2, y: 2.62436, z: 421.7}
+--- !u!114 &4235833374108888594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da77ca891124406193bfb571209df1dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentPerception
+  PerceptionDimensions: 1
+  PerceptionMode: 1
+  IgnoreObstacles: 0
+  _offset: 90
+  _fieldOfView: 270
+  _resolution: 15
+  _range: 10
+  _canSeeEverythingAtRange: 0
+  _seeEverythingMode: 0
+  _seeEverythingRange: 2
+  _seeEverythingResolution: 7
+  _origin: {fileID: 4123856079415609227}
+  agentMemory:
+    _capacity: 1
+    _duration: 30
+    _rememberPositionOfTarget: 0
+  _visualize: 1
+  _perceptionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _seenUnits: []
+--- !u!114 &2115608095411807990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535278682347903762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48127164bd21aa648b770b4a1cbbbd16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentDeathHandler
+  deathType: 0
+  deathDelay: 1.5
+  spawnRagdoll: 0
+  _ragdollPref: {fileID: 0}
+  _dropItems: 0
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+  onRespawn:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDeathSounds: []
+  agentsPoolHandler:
+    wayPointsGroup: {fileID: 0}
+    AgentsPool: []
+    WavesInitiated: 0
+  newPositionOnRespawn: 0
+--- !u!120 &7917882358974294558
 LineRenderer:
   serializedVersion: 3
   m_ObjectHideFlags: 0
@@ -448,7 +751,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9e92d8e2bc559fb4e907be8e02bdcb75, type: 2}
+  - {fileID: 2100000, guid: b42521ad476565341b37518621b62de4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -482,7 +785,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.51448286
+        value: 0.5298252
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -530,8 +833,39 @@ LineRenderer:
     shadowBias: 0.5
     generateLightingData: 0
   m_UseWorldSpace: 1
-  m_Loop: 1
+  m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!1 &1642260932578376841
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4123856079415609227}
+  m_Layer: 0
+  m_Name: __look__
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4123856079415609227
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1642260932578376841}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7303459930650656635}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3551733479754213690
 GameObject:
   m_ObjectHideFlags: 0
@@ -613,6 +947,68 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   maxTargetingDistance: 100
+--- !u!1 &6264791097013354027
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3016653346237311926}
+  m_Layer: 0
+  m_Name: __inventory__
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3016653346237311926
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6264791097013354027}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7303459930650656635}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &9217798394914695760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4525493477782662090}
+  m_Layer: 0
+  m_Name: __shoot__
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4525493477782662090
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9217798394914695760}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7303459930650656635}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2641456621744942619
 PrefabInstance:
   m_ObjectHideFlags: 0

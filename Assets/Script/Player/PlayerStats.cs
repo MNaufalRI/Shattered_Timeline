@@ -1,23 +1,59 @@
 using StarterAssets;
 using System.Collections;
 using UnityEngine;
-
+using Eliot.AgentComponents;
 
 
 public class PlayerStats : MonoBehaviour
 {
-    [Header("Health")]
-    public float maxHealth = 100f;
-    public float currentHealth;
+    private EliotAgent eliotAgent;
+    private AgentResources eliotResources;
 
-    [Header("Mana")]
-    public float maxMana = 50f;
-    public float currentMana;
+    // Menggunakan Indexer [] sesuai skrip AgentResources
+    public float currentHealth
+    {
+        get
+        {
+            if (eliotResources == null) return 100f;
+            var res = eliotResources["Health"]; // Memanggil Indexer
+            return res != null ? res.currentValue : 100f; // Menggunakan .currentValue
+        }
+    }
 
+    public float maxHealth
+    {
+        get
+        {
+            if (eliotResources == null) return 100f;
+            var res = eliotResources["Health"];
+            // Di skripmu, nilai awal/maks biasanya adalah initialValue
+            return res != null ? res.initialValue : 100f;
+        }
+    }
+
+    public float currentMana
+    {
+        get
+        {
+            if (eliotResources == null) return 50f;
+            var res = eliotResources["Mana"];
+            return res != null ? res.currentValue : 50f;
+        }
+    }
+
+    public float maxMana
+    {
+        get
+        {
+            if (eliotResources == null) return 50f;
+            var res = eliotResources["Mana"];
+            return res != null ? res.initialValue : 50f;
+        }
+    }
+
+    [Header("Status")]
     public bool isInvincible = false;
-
-    [Header("Attack Stats")]
-    public float attackDamage = 20f;
+    public bool isStunned = false;
 
     [Header("UI")]
     public StatBarUI healthBar;
@@ -27,60 +63,89 @@ public class PlayerStats : MonoBehaviour
     public Transform spawnPoint;
     public float respawnDelay = 2f;
 
-    [Header("Status Effects")]
-    public bool isStunned = false;
-
-    [SerializeField] ScreenFader fader;
+    [Header("References")]
+    [SerializeField] private ScreenFader fader;
     [SerializeField] private Animator heartAnim;
 
+    [Header("Potion Effects")]
+    private float potionRegenBonus = 0f;
+
     private Animator anim;
+    private PlayerMovement2 controller;
     private bool isDead = false;
     public bool IsDead() => isDead;
     private float beatTimer = 0f;
 
-    private PlayerMovement2 controller;
+    private float healthRegenAccumulator = 0f;
+    private float manaRegenAccumulator = 0f;
+    private bool isInitialized = false; // Flag untuk menunggu data siap
+    private float lastHealth; // Untuk mengecek perubahan (Dirty Flag)
+    private float lastMana;
+
+    public float attackDamage
+    {
+        get
+        {
+            return eliotAgent != null ? eliotAgent["Attack", 20f] : 20f;
+        }
+    }
 
     void Awake()
     {
-        currentHealth = maxHealth;
-        currentMana = maxMana;
-
+        eliotAgent = GetComponent<EliotAgent>();
+        eliotResources = GetComponent<AgentResources>();
         anim = GetComponentInChildren<Animator>();
         controller = GetComponent<PlayerMovement2>();
     }
 
-    void Start()
+    IEnumerator Start()
     {
-        UpdateUI();
+        isInitialized = false;
+        yield return new WaitForSeconds(1f);
 
+        lastHealth = currentHealth;
+        lastMana = currentMana;
+
+        UpdateUI();
+        isInitialized = true;
     }
 
     void Update()
     {
+        if (isDead || !isInitialized) return;
+
         UpdateHeartBeat();
         RegenMana();
         RegenHealth();
+
+        // --- TAMBAHKAN INI: CEK KEMATIAN ---
+        if (currentHealth <= 0)
+        {
+            PlayerDie();
+            return; // Langsung keluar agar kode di bawahnya tidak jalan
+        }
+
+        // Strategi Optimasi Dirty Flag
+        if (currentHealth != lastHealth || currentMana != lastMana)
+        {
+            UpdateUI();
+            lastHealth = currentHealth;
+            lastMana = currentMana;
+        }
     }
 
     void UpdateUI()
     {
-        if (healthBar != null)
-            healthBar.SetValue(currentHealth);
-
-        if (manaBar != null)
-            manaBar.SetValue(currentMana);
+        if (healthBar != null) healthBar.SetValue(currentHealth);
+        if (manaBar != null) manaBar.SetValue(currentMana);
     }
 
     void UpdateHeartBeat()
     {
         if (heartAnim == null) return;
-
         float hpPercent = currentHealth / maxHealth;
-
         float interval = Mathf.Lerp(0.2f, 6f, hpPercent);
-
         beatTimer += Time.deltaTime;
-
         if (beatTimer >= interval)
         {
             heartAnim.SetTrigger("Beat");
@@ -88,161 +153,167 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    // ================= DAMAGE =================
-
     public void TakeDamage(float damage)
     {
-        Debug.Log("KENA DAMAGE: " + damage);
-        Debug.Log("HP sekarang: " + currentHealth);
+        if (isDead || isInvincible || eliotResources == null) return;
 
-        if (isDead || isInvincible) return;
-
-        currentHealth -= damage;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
-        UpdateUI();
+        eliotResources.Action(new ResourceAction("Health", ResourceAffectionWay.Reduce, Mathf.RoundToInt(damage)));
 
         if (currentHealth <= 0)
         {
             PlayerDie();
         }
-        else
+        else if (anim != null)
         {
-            if (anim != null)
-            {
-                anim.ResetTrigger("Hit");
-                anim.SetTrigger("Hit");
-            }
+            anim.ResetTrigger("Hit");
+            anim.SetTrigger("Hit");
         }
+        UpdateUI();
     }
-
-    // ================= MANA =================
 
     public bool UseMana(float amount)
     {
-        if (currentMana < amount)
-            return false;
+        if (currentMana < amount || eliotResources == null) return false;
 
-        currentMana -= amount;
-        currentMana = Mathf.Clamp(currentMana, 0, maxMana);
-
+        eliotResources.Action(new ResourceAction("Mana", ResourceAffectionWay.Reduce, Mathf.RoundToInt(amount)));
         UpdateUI();
         return true;
     }
 
     public void RestoreMana(float amount)
     {
-        currentMana += amount;
-        currentMana = Mathf.Clamp(currentMana, 0, maxMana);
-
+        if (eliotResources == null) return;
+        // Menggunakan ResourceAffectionWay.Increase
+        eliotResources.Action(new ResourceAction("Mana", ResourceAffectionWay.Increase, Mathf.RoundToInt(amount)));
         UpdateUI();
     }
 
     void RegenMana()
     {
-        if (currentMana < maxMana && !isDead)
+        if (currentMana < maxMana && !isDead && eliotResources != null)
         {
-            currentMana += 0.5f * Time.deltaTime;
-            currentMana = Mathf.Clamp(currentMana, 0, maxMana);
-            UpdateUI();
+            manaRegenAccumulator += 0.5f * Time.deltaTime;
+            if (manaRegenAccumulator >= 1f)
+            {
+                int addAmount = Mathf.FloorToInt(manaRegenAccumulator);
+                eliotResources.Action(new ResourceAction("Mana", ResourceAffectionWay.Increase, addAmount));
+                manaRegenAccumulator -= addAmount;
+                UpdateUI();
+            }
         }
     }
 
     void RegenHealth()
     {
-        if (currentHealth < maxHealth && !isDead)
+        if (currentHealth < maxHealth && !isDead && eliotResources != null)
         {
-            currentHealth += 0.2f * Time.deltaTime;
-            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-            UpdateUI();
+            // Gabungkan regen asli (0.2f) dengan bonus potion
+            float totalRegenSpeed = 0.2f + potionRegenBonus;
+
+            healthRegenAccumulator += totalRegenSpeed * Time.deltaTime;
+
+            if (healthRegenAccumulator >= 1f)
+            {
+                int addAmount = Mathf.FloorToInt(healthRegenAccumulator);
+                eliotResources.Action(new ResourceAction("Health", ResourceAffectionWay.Increase, addAmount));
+                healthRegenAccumulator -= addAmount;
+                UpdateUI();
+            }
         }
     }
+    public void ApplyPotionEffect(float instantHeal, float regenAmount, float duration)
+    {
+        if (eliotResources == null || isDead) return;
 
-    // ================= DEATH =================
+        // 1. Instant Heal 25 HP
+        eliotResources.Action(new ResourceAction("Health", ResourceAffectionWay.Increase, Mathf.RoundToInt(instantHeal)));
+
+        // 2. Jalankan Buff Regen (+1 HP/dtk)
+        StartCoroutine(PotionRegenRoutine(regenAmount, duration));
+    }
+
+    private IEnumerator PotionRegenRoutine(float amount, float duration)
+    {
+        potionRegenBonus += amount; // Tambah ke tumpukan
+        yield return new WaitForSeconds(duration);
+        potionRegenBonus -= amount; // Kurangi dari tumpukan setelah durasi habis
+
+        if (potionRegenBonus < 0) potionRegenBonus = 0; // Safety check
+    }
 
     void PlayerDie()
     {
         if (isDead) return;
-
         isDead = true;
 
-        if (anim != null)
-            anim.SetTrigger("Die");
+        Debug.Log("<color=black><b>PLAYER MATI!</b></color>");
 
-        if (controller != null)
-            controller.canMove = false;
+        if (anim != null) anim.SetTrigger("Die");
+        if (controller != null) controller.canMove = false;
 
-        Debug.Log("Player Mati");
+        // Hentikan regenerasi agar tidak menambah darah saat animasi mati
+        healthRegenAccumulator = 0;
+        manaRegenAccumulator = 0;
 
         StartCoroutine(RespawnRoutine());
+        UpdateUI();
     }
 
     IEnumerator RespawnRoutine()
     {
-        if (fader != null)
-            yield return StartCoroutine(fader.FadeOutWithDeathText());
+        if (fader != null) yield return StartCoroutine(fader.FadeOutWithDeathText());
+        yield return new WaitForSeconds(respawnDelay);
 
-        yield return new WaitForSeconds(1.5f);
+        // 1. Reset HP dan Mana
+        if (eliotResources != null)
+        {
+            eliotResources.ReplenishResource("Health", Mathf.RoundToInt(maxHealth));
+            eliotResources.ReplenishResource("Mana", Mathf.RoundToInt(maxMana));
+        }
 
-        currentHealth = maxHealth;
-        currentMana = maxMana;
-
-        UpdateUI();
-
+        // 2. Teleportasi ke Spawn Point
         if (spawnPoint != null)
         {
             CharacterController cc = GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
-
+            if (cc != null) cc.enabled = false; // Matikan CC agar teleportasi lancar
             transform.position = spawnPoint.position;
-
             if (cc != null) cc.enabled = true;
         }
 
+        // 3. Reset Status Kematian
         isDead = false;
 
+        // 4. HIDUPKAN KEMBALI KONTROLLER (PENTING!)
         if (controller != null)
-            controller.canMove = true;
+        {
+            controller.enabled = true; // Aktifkan skripnya kembali
+            controller.canMove = true; // Beri izin untuk bergerak
+        }
 
+        // 5. Kembalikan Animasi ke Normal
         if (anim != null)
         {
             anim.ResetTrigger("Die");
-            anim.Play("Locomotion");
+            anim.Play("Locomotion"); // Pastikan nama state animasi jalanmu benar
         }
 
-        if (fader != null)
-            yield return StartCoroutine(fader.FadeIn());
-    }
+        UpdateUI();
 
-    // ================= STUN =================
+        if (fader != null) yield return StartCoroutine(fader.FadeIn());
+    }
 
     public void ApplyStun(float duration)
     {
-        // Jangan di-stun kalau sudah mati atau sedang invincible
         if (isDead || isInvincible) return;
-
         StartCoroutine(StunRoutine(duration));
     }
 
     private IEnumerator StunRoutine(float duration)
     {
         isStunned = true;
-
-        // Matikan pergerakan
         if (controller != null) controller.canMove = false;
-
-        // Opsional: Jika kamu punya animasi Stun pusing-pusing, panggil di sini
-        // if (anim != null) anim.SetTrigger("Stun");
-
-        Debug.Log("<color=cyan>Player terkena STUN selama " + duration + " detik!</color>");
-
         yield return new WaitForSeconds(duration);
-
         isStunned = false;
-
-        // Nyalakan pergerakan kembali (tapi pastikan player tidak mati saat sedang di-stun)
         if (!isDead && controller != null) controller.canMove = true;
-
-        Debug.Log("<color=cyan>Efek STUN selesai!</color>");
     }
 }

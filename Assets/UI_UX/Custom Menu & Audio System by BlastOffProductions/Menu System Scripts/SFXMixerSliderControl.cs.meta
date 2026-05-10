@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: fccd4cb5ec1fc4cddbde24337c59538a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 330923
+  packageName: Custom Menu & Audio System
+  packageVersion: 1.0
+  assetPath: Assets/Custom Menu & Audio System by BlastOffProductions/Menu System
+    Scripts/SFXMixerSliderControl.cs
+  uploadId: 783398
