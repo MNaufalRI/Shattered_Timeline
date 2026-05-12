@@ -10,6 +10,7 @@ public class EnemyBase : MonoBehaviour
     [SerializeField] private GameObject activeTargetObject;
 
     private NavMeshAgent agent;
+    private Animator anim;
 
     void Awake()
     {
@@ -19,6 +20,7 @@ public class EnemyBase : MonoBehaviour
     void Start()
     {
         ActiveTarget(false);
+        anim = GetComponentInChildren<Animator>();
     }
 
     public void SpawnHitVfx(Vector3 pos)
@@ -40,6 +42,8 @@ public class EnemyBase : MonoBehaviour
     public void OnHit()
     {
         if (!gameObject.activeInHierarchy) return;
+
+        if (anim != null) anim.SetTrigger("Hit");
 
         StartCoroutine(HitPause());
     }

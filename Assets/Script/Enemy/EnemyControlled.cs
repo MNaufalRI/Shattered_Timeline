@@ -19,7 +19,7 @@ public class EnemySimple : MonoBehaviour, IDamageable
     public float roamWaitTime = 3f;
 
     [Header("Hit Settings")]
-    public float hitPauseDuration = 0.15f; // lebih natural
+    public float hitPauseDuration = 0.15f; 
 
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
@@ -29,6 +29,7 @@ public class EnemySimple : MonoBehaviour, IDamageable
 
     private Transform player;
     private NavMeshAgent agent;
+    private Animator anim; // [TAMBAHAN ANIMASI] Deklarasi Animator
 
     private float lastAttackTime;
     private bool isDead = false;
@@ -43,13 +44,12 @@ public class EnemySimple : MonoBehaviour, IDamageable
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        
+        // [TAMBAHAN ANIMASI] Mengambil komponen Animator (bisa di objek ini atau child modelnya)
+        anim = GetComponentInChildren<Animator>(); 
 
-        // simpan speed awal
         originalSpeed = agent.speed;
-
-        // penting: rotasi manual biar gak glitch
         agent.updateRotation = false;
-
         homePosition = transform.position;
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -62,9 +62,14 @@ public class EnemySimple : MonoBehaviour, IDamageable
     void Update()
     {
         if (isDead || player == null) return;
+
+        if (anim != null && agent != null && agent.isOnNavMesh)
+        {
+            anim.SetFloat("Speed", agent.velocity.magnitude);
+        }
+
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
-        // Saat kena hit → cuma hadap player (tidak jalan)
         if (isHitPaused)
         {
             RotateTowards(player.position);
@@ -82,16 +87,18 @@ public class EnemySimple : MonoBehaviour, IDamageable
         {
             isAggro = false;
             HandleRoaming();
+
+            if (agent.velocity.sqrMagnitude > 0.1f)
+            {
+                RotateTowards(transform.position + agent.velocity);
+            }
         }
 
-        // 🔥 FAIL SAFE (anti stuck)
         if (isAggro && !agent.hasPath)
         {
             agent.SetDestination(player.position);
         }
     }
-
-    // ================= ROTATION =================
 
     void RotateTowards(Vector3 targetPos)
     {
@@ -108,8 +115,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
         );
     }
 
-    // ================= CHASE =================
-
     void ChasePlayer(float distance)
     {
         RotateTowards(player.position);
@@ -123,8 +128,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
             TryAttack();
     }
 
-    // ================= ROAM =================
-
     void HandleRoaming()
     {
         if (isAggro) return;
@@ -137,7 +140,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
             {
                 Vector3 newPos = GetRandomRoamPosition(homePosition, roamRadius);
 
-                RotateTowards(newPos);
                 agent.SetDestination(newPos);
 
                 roamTimer = 0f;
@@ -151,7 +153,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
         {
             Vector3 random = Random.insideUnitSphere * distance;
             random.y = 0f;
-
             Vector3 pos = center + random;
 
             if (NavMesh.SamplePosition(pos, out NavMeshHit hit, distance, NavMesh.AllAreas))
@@ -161,27 +162,23 @@ public class EnemySimple : MonoBehaviour, IDamageable
         return homePosition;
     }
 
-    // ================= ATTACK =================
-
     void TryAttack()
     {
-        // Jangan menyerang jika: Sedang cooldown, sedang HitPause, atau sudah mati
         if (Time.time < lastAttackTime + attackCooldown || isHitPaused || isDead) return;
 
-        // 1. Hadap player dengan tegas saat memukul
         RotateTowards(player.position);
 
+        // [TAMBAHAN ANIMASI] Trigger animasi Attack
+        if (anim != null) anim.SetTrigger("Attack");
 
-        // 3. Berikan Kerusakan ke Player (Jembatan ke Eliot)
         PlayerStats pStats = player.GetComponent<PlayerStats>();
         if (pStats != null)
         {
-            pStats.TakeDamage(damageAmount); // Ini akan memanggil ResourceAction Eliot
+            pStats.TakeDamage(damageAmount);
             Debug.Log($"<color=orange>[Enemy]</color> Berhasil memukul Player! Damage: {damageAmount}");
         }
         else
         {
-            // Fail-safe: Jika PlayerStats tidak ditemukan, coba cari AgentResources langsung
             var eliotRes = player.GetComponent<Eliot.AgentComponents.AgentResources>();
             if (eliotRes != null)
             {
@@ -191,8 +188,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
 
         lastAttackTime = Time.time;
     }
-
-    // ================= DAMAGE =================
 
     public void TakeDamage(float amount)
     {
@@ -212,6 +207,8 @@ public class EnemySimple : MonoBehaviour, IDamageable
         isHitPaused = true;
         agent.speed = 0f;
 
+        // [TAMBAHAN ANIMASI] Trigger animasi Hi
+
         yield return new WaitForSeconds(hitPauseDuration);
 
         if (!isDead && agent != null && agent.enabled)
@@ -222,14 +219,15 @@ public class EnemySimple : MonoBehaviour, IDamageable
         isHitPaused = false;
     }
 
-    // ================= DEATH =================
-
     void Die()
     {
         if (isDead) return;
         isDead = true;
 
         StopAllCoroutines();
+
+        // [TAMBAHAN ANIMASI] Trigger animasi mati
+        if (anim != null) anim.SetTrigger("Die");
 
         if (agent != null)
         {
@@ -239,10 +237,10 @@ public class EnemySimple : MonoBehaviour, IDamageable
 
         DropLoot();
 
-        Destroy(gameObject, 0.2f);
+        // [PENTING] Ubah waktu hancur objek dari 0.2f menjadi lebih lama (misal 2.5f atau 3f) 
+        // agar animasi mati sempat diputar sampai selesai sebelum objek menghilang.
+        Destroy(gameObject, 2.5f); 
     }
-
-    // ================= LOOT =================
 
     void DropLoot()
     {
@@ -259,16 +257,12 @@ public class EnemySimple : MonoBehaviour, IDamageable
         }
     }
 
-    // ================= DEBUG =================
-
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRadius);
-
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(
             Application.isPlaying ? homePosition : transform.position,

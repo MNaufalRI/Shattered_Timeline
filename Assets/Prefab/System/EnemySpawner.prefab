@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1281583409832007325
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4147531250706583186}
+  - component: {fileID: 8387974025538393857}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4147531250706583186
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1281583409832007325}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 111.56, y: 3.58273, z: 443.69}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8387974025538393857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1281583409832007325}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49fbc5e2739105c4a9b9f95bd6d7b587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyPrefabs:
+  - {fileID: 8460526869010038585, guid: b6585829a37ec36439c64ef258a2018f, type: 3}
+  - {fileID: 6989164374261987605, guid: 2249aad432b42fe43ad902b9144a44cd, type: 3}
+  - {fileID: 787905363251756118, guid: 80f4064220919504fb0dcfbef59eed2c, type: 3}
+  - {fileID: 2806428032778912936, guid: f021c5b3bbf55b5478e12b9f04daa191, type: 3}
+  - {fileID: 818684273967544279, guid: f684aa2f7351494488d2f50d051e8130, type: 3}
+  - {fileID: 3911212919222856933, guid: 65c6dc575b5f1e94080878bac87a0e7d, type: 3}
+  - {fileID: 3728882003985594690, guid: ee89758707d6def4e93947b2c7f0c7c9, type: 3}
+  - {fileID: 4224374936590434273, guid: 9c4a2319d0ca71f4c86930e14088cfc8, type: 3}
+  minSpawn: 5
+  maxSpawn: 8
+  spawnRadius: 8
