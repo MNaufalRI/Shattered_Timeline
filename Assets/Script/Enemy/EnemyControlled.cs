@@ -40,6 +40,7 @@ public class EnemySimple : MonoBehaviour, IDamageable
     private float roamTimer;
 
     private float originalSpeed;
+    public static event System.Action OnEnemyKilled;
 
     void Start()
     {
@@ -177,15 +178,6 @@ public class EnemySimple : MonoBehaviour, IDamageable
             pStats.TakeDamage(damageAmount);
             Debug.Log($"<color=orange>[Enemy]</color> Berhasil memukul Player! Damage: {damageAmount}");
         }
-        else
-        {
-            var eliotRes = player.GetComponent<Eliot.AgentComponents.AgentResources>();
-            if (eliotRes != null)
-            {
-                eliotRes.Action(new Eliot.AgentComponents.ResourceAction("Health", Eliot.AgentComponents.ResourceAffectionWay.Reduce, Mathf.RoundToInt(damageAmount)));
-            }
-        }
-
         lastAttackTime = Time.time;
     }
 
@@ -225,10 +217,7 @@ public class EnemySimple : MonoBehaviour, IDamageable
         isDead = true;
 
         StopAllCoroutines();
-
-        // [TAMBAHAN ANIMASI] Trigger animasi mati
         if (anim != null) anim.SetTrigger("Die");
-
         if (agent != null)
         {
             agent.isStopped = true;
@@ -237,9 +226,9 @@ public class EnemySimple : MonoBehaviour, IDamageable
 
         DropLoot();
 
-        // [PENTING] Ubah waktu hancur objek dari 0.2f menjadi lebih lama (misal 2.5f atau 3f) 
-        // agar animasi mati sempat diputar sampai selesai sebelum objek menghilang.
-        Destroy(gameObject, 2.5f); 
+        OnEnemyKilled?.Invoke();
+
+        Destroy(gameObject, 2.5f);
     }
 
     void DropLoot()

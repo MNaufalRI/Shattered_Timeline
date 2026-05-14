@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 001aeb3efde68a04382931e17df01c51, type: 3}
+  m_Name: Tes
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.BehaviourEditor.EliotBehaviour
+  Nodes:
+  - {fileID: 2836446439881304190}
+  Transitions: []
+  _json: 
+--- !u!114 &2836446439881304190
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b700b82d4000714cb9a7bd016098bc9, type: 3}
+  m_Name: Entry
+  m_EditorClassIdentifier: Assembly-CSharp::Eliot.BehaviourEditor.EntryNode
+  Exist: 1
+  EditorId: 0
+  NodeName: Entry
+  NodeId: Entry
+  Rect:
+    serializedVersion: 2
+    x: 1992
+    y: 992
+    width: 216
+    height: 56
+  Transitions: []
+  TransitionsIn: []
+  FuncIndex: 0
+  FuncNames:
+  - loading...
+  _functionName: 
+  Behaviour: {fileID: 11400000}
+  CaptureControl: 0

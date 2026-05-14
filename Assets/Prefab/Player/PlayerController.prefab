@@ -80,17 +80,8 @@ GameObject:
   - component: {fileID: 2875949919914028908}
   - component: {fileID: 8629840735691919706}
   - component: {fileID: 8318306095260314847}
-  - component: {fileID: 6623416894280616159}
   - component: {fileID: 7917882358974294558}
-  - component: {fileID: 5313642890725785653}
-  - component: {fileID: 1550990887323984500}
   - component: {fileID: 4583176550440924452}
-  - component: {fileID: 1406235712337735720}
-  - component: {fileID: 7069871926291604797}
-  - component: {fileID: 3030569142081278282}
-  - component: {fileID: 8524549550196505759}
-  - component: {fileID: 9081636325578400533}
-  - component: {fileID: 105289679312723346}
   m_Layer: 10
   m_Name: PlayerController
   m_TagString: Player
@@ -393,14 +384,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8cd50379346d0947b3f8fd41fc84417, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  _maxHealth: 100
+  _currentHealth: 100
+  _maxMana: 50
+  _currentMana: 50
+  _baseDamage: 20
   isInvincible: 0
   isStunned: 0
   healthBar: {fileID: 0}
   manaBar: {fileID: 0}
-  spawnPoint: {fileID: 0}
   respawnDelay: 2
+  currentSpawnPoint: {x: 0, y: 0, z: 0}
   fader: {fileID: 0}
   heartAnim: {fileID: 0}
+  potionVFXPrefab: {fileID: 0}
+  DebuffVFXPrefab: {fileID: 0}
+  vfxSpawnPoint: {fileID: 0}
 --- !u!114 &8629840735691919706
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -438,36 +437,6 @@ MonoBehaviour:
   shaderVarAlpha: _Alpha
   fadeRate: 0.05
   fadeRefreshRate: 0.05
---- !u!114 &6623416894280616159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16b13f6df719b7c45b1d8f0da8b9f8c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.Environment.Unit
-  _type: 0
-  _team: red
-  _friendlyTeams: []
-  attributesGroups:
-  - source: {fileID: 11400000, guid: 4eda629213b59a9468a31aeb4ae456e5, type: 2}
-    attributes:
-    - type: 2
-      name: Attack
-      boolValue: 0
-      intValue: 20
-      floatValue: 20
-      stringValue: 
-      objectValue: {fileID: 0}
-    displayAttributes: 1
-  visualizationType: 0
-  gizmosColor: {r: 1, g: 1, b: 1, a: 1}
-  visualizationBoxSize: {x: 1, y: 1, z: 1}
-  visualizationSphereRadius: 1
 --- !u!120 &7917882358974294558
 LineRenderer:
   serializedVersion: 3
@@ -578,64 +547,6 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
---- !u!114 &5313642890725785653
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16b13f6df719b7c45b1d8f0da8b9f8c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.Environment.Unit
-  _type: 0
-  _team: Biru
-  _friendlyTeams: []
-  attributesGroups:
-  - source: {fileID: 11400000, guid: 4eda629213b59a9468a31aeb4ae456e5, type: 2}
-    attributes:
-    - type: 2
-      name: Attack
-      boolValue: 0
-      intValue: 20
-      floatValue: 20
-      stringValue: 
-      objectValue: {fileID: 0}
-    displayAttributes: 1
-  visualizationType: 0
-  gizmosColor: {r: 1, g: 1, b: 1, a: 1}
-  visualizationBoxSize: {x: 1, y: 1, z: 1}
-  visualizationSphereRadius: 1
---- !u!114 &1550990887323984500
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4ad79e119b0015488c491c66044c67d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.EliotAgent
-  _aiEnabled: 0
-  _behaviour: {fileID: 0}
-  _ping: 0.1
-  wayPoints: {fileID: 0}
-  _applyChangesOnWayPoints: 1
-  _skills:
-  - {fileID: 0}
-  _activeEffects: []
-  _debugSkill: 1
-  _debugWaypoints: 1
-  _debugTarget: 1
-  _skillOrigin: {fileID: 5098097452331197095}
-  curWayPoint: {fileID: 0}
-  isDoingAction: 0
-  editorAdvancedMode: 1
-  agentType: 0
 --- !u!195 &4583176550440924452
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -658,217 +569,6 @@ NavMeshAgent:
   m_BaseOffset: -2.12436
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &1406235712337735720
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0519884c9197924d9ba5389b4eb6d09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentAnimation
-  _animationMode: 1
-  _animation: {fileID: 0}
-  _clips:
-    Idle: {fileID: 0}
-    Walk: {fileID: 0}
-    Run: {fileID: 0}
-    Dodge: {fileID: 0}
-    TakeDamage: {fileID: 0}
-    LoadSkill: {fileID: 0}
-    UseSkill: {fileID: 0}
-    Death: {fileID: 0}
-  _animator: {fileID: 7723006920448470172}
-  _applyRootMotion: 0
-  _rootMotionRotation: 0
-  _changeGraphicsName: 0
-  _parameters:
-    Vertical: Vertical
-    Horizontal: Horizontal
-    DodgeBool: Dodge
-    GetHitBool: GetHit
-    LoadSkillBool: LoadSkill
-    ExecuteSkillBool: Skill
-    DeathBool: Death
---- !u!114 &7069871926291604797
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5273f4e99b6b984d8953faedf11907d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentInventory
-  _maxWeight: 0
-  _items: []
-  _wieldedItem: {fileID: 0}
-  _initFromList: 0
-  _initFromChildren: 0
-  _dropRadius: 0
---- !u!114 &3030569142081278282
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe633ec5c6414bd397fe754d97488af6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentMotion
-  _type: 0
-  _weight: 1
-  _walkSpeed: 5
-  _canRun: 0
-  _runSpeed: 10
-  _walkCost: []
-  _runCost: []
-  _rotationSpeed: 10
-  _canDodge: 0
-  _dodgeSpeed: 10
-  _dodgeDelay: 0
-  _dodgeCoolDown: 2
-  _dodgeDuration: 0.1
-  _patrolTime: 5
-  _walkingStepSounds: []
-  _walkingStepPing: 0.5
-  _runningStepSounds: []
-  _runningStepPing: 0.2
-  _dodgeSounds: []
-  _head: {fileID: 0}
-  _idleRotationSpeed: 0
-  _clampIdleRotation: 0
-  _clampedIdleRotStart: 0
-  _clampedIdleRotEnd: 0
-  _debug: 0
-  initialPosition: {x: 135.95, y: 2.62436, z: 421.49}
---- !u!114 &8524549550196505759
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da77ca891124406193bfb571209df1dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentPerception
-  PerceptionDimensions: 1
-  PerceptionMode: 1
-  IgnoreObstacles: 0
-  _offset: 90
-  _fieldOfView: 270
-  _resolution: 15
-  _range: 10
-  _canSeeEverythingAtRange: 0
-  _seeEverythingMode: 0
-  _seeEverythingRange: 2
-  _seeEverythingResolution: 7
-  _origin: {fileID: 4123856079415609227}
-  agentMemory:
-    _capacity: 1
-    _duration: 30
-    _rememberPositionOfTarget: 0
-  _visualize: 1
-  _perceptionMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  _seenUnits: []
---- !u!114 &9081636325578400533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48127164bd21aa648b770b4a1cbbbd16, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentDeathHandler
-  deathType: 0
-  deathDelay: 1.5
-  spawnRagdoll: 0
-  _ragdollPref: {fileID: 0}
-  _dropItems: 0
-  onDeath:
-    m_PersistentCalls:
-      m_Calls: []
-  onRespawn:
-    m_PersistentCalls:
-      m_Calls: []
-  _onDeathSounds: []
-  agentsPoolHandler:
-    wayPointsGroup: {fileID: 0}
-    AgentsPool: []
-    WavesInitiated: 0
-  newPositionOnRespawn: 0
---- !u!114 &105289679312723346
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535278682347903762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcd0ccd4a163466288d4a38219eede0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Eliot.AgentComponents.AgentResources
-  resourcesProfiles:
-  - source: {fileID: 11400000, guid: a5443cd46cf60e74abdcd33a749ce224, type: 2}
-    resources:
-    - name: Mana
-      maxValue: 50
-      minValue: 0
-      initialValue: 50
-      replenishAmount: 0
-      replenishCooldown: 0
-      currentValue: 0
-      dieOnEmpty: 0
-      onReplenish:
-        m_PersistentCalls:
-          m_Calls: []
-      onReduce:
-        m_PersistentCalls:
-          m_Calls: []
-      onEmpty:
-        m_PersistentCalls:
-          m_Calls: []
-      onFull:
-        m_PersistentCalls:
-          m_Calls: []
-      agent: {fileID: 0}
-    - name: Health
-      maxValue: 100
-      minValue: 0
-      initialValue: 100
-      replenishAmount: 0
-      replenishCooldown: 0
-      currentValue: 0
-      dieOnEmpty: 0
-      onReplenish:
-        m_PersistentCalls:
-          m_Calls: []
-      onReduce:
-        m_PersistentCalls:
-          m_Calls: []
-      onEmpty:
-        m_PersistentCalls:
-          m_Calls: []
-      onFull:
-        m_PersistentCalls:
-          m_Calls: []
-      agent: {fileID: 0}
-    displayResources: 1
 --- !u!1 &1642260932578376841
 GameObject:
   m_ObjectHideFlags: 0
@@ -1252,8 +952,7 @@ PrefabInstance:
       propertyPath: enemyLayer.m_Bits
       value: 128
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 4735142292659803662, guid: 098b6d7b231143d4d9dfaa276a7a99e9, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

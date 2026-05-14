@@ -1,24 +1,21 @@
 using UnityEngine;
-using UnityEngine.UI; // Wajib untuk mengakses komponen Image
+using UnityEngine.UI;
 using TMPro;
-using Eliot.AgentComponents;
 using DG.Tweening;
 
 public class BossHealthUI : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private GameObject bossUIPanel;
-
-    // GANTI SLIDER MENJADI IMAGE
     [SerializeField] private Image animatedHealthFill;
     [SerializeField] private TextMeshProUGUI bossNameText;
 
-    [Header("Boss Data")]
-    public AgentResources bossResources;
+    [Header("Boss Reference")]
+    // Sekarang mereferensikan langsung ke script GluttonyBase
+    public DragonBoarStats bossBase;
     public string bossName = "Gluttony";
 
-    private float currentHealth;
-    private float maxHealth;
+    private float lastKnownHealth;
     private bool isBossActive = false;
 
     void Start()
@@ -27,61 +24,63 @@ public class BossHealthUI : MonoBehaviour
         if (bossNameText != null) bossNameText.text = bossName;
     }
 
-    public void ActivateBossUI(AgentResources newBossResources)
+    // Panggil fungsi ini saat boss muncul/mulai bertarung
+    public void ActivateBossUI(DragonBoarStats reference)
     {
-        bossResources = newBossResources;
+        bossBase = reference;
 
-        CanvasGroup cg = bossUIPanel.GetComponent<CanvasGroup>();
-        if (cg != null)
+        if (bossBase != null)
         {
-            cg.alpha = 1f; // Pastikan tidak transparan saat muncul
-        }
+            // Sinkronisasi data awal
+            lastKnownHealth = bossBase.currentHealth;
 
-        if (bossResources != null)
-        {
-            var hpRes = bossResources["Health"];
-            if (hpRes != null)
+            // Set Fill Amount awal secara instan tanpa animasi
+            float healthPercentage = bossBase.currentHealth / bossBase.maxHealth;
+            animatedHealthFill.fillAmount = healthPercentage;
+
+            // Efek muncul (Fade In) jika ada CanvasGroup
+            CanvasGroup cg = bossUIPanel.GetComponent<CanvasGroup>();
+            if (cg != null)
             {
-                maxHealth = hpRes.initialValue;
-                currentHealth = hpRes.currentValue;
-
-                // Hitung persentase awal (0.0 sampai 1.0)
-                float healthPercentage = currentHealth / maxHealth;
-                animatedHealthFill.fillAmount = healthPercentage;
+                cg.alpha = 0f;
+                bossUIPanel.SetActive(true);
+                cg.DOFade(1, 0.5f);
             }
-        }
+            else
+            {
+                bossUIPanel.SetActive(true);
+            }
 
-        bossUIPanel.SetActive(true);
-        isBossActive = true;
+            isBossActive = true;
+        }
     }
 
     void Update()
     {
-        if (!isBossActive || bossResources == null) return;
+        if (!isBossActive || bossBase == null) return;
 
-        var hpRes = bossResources["Health"];
-        if (hpRes != null)
+        // Cek apakah darah berubah sejak frame terakhir
+        if (lastKnownHealth != bossBase.currentHealth)
         {
-            if (currentHealth != hpRes.currentValue)
+            lastKnownHealth = bossBase.currentHealth;
+
+            // 1. Hitung persentase darah (0.0 - 1.0)
+            float targetFill = Mathf.Clamp01(bossBase.currentHealth / bossBase.maxHealth);
+
+            // 2. Animasikan perubahan Fill Amount menggunakan DOTween
+            animatedHealthFill.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad);
+
+            // 3. Jika darah habis, sembunyikan UI
+            if (bossBase.currentHealth <= 0)
             {
-                currentHealth = hpRes.currentValue;
-
-                // 1. Hitung persentase darah saat ini
-                float targetFill = currentHealth / maxHealth;
-
-                // 2. Animasikan perubahan Fill Amount menggunakan DOTween
-                animatedHealthFill.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad);
-
-                if (currentHealth <= 0)
-                {
-                    HideBossUI();
-                }
+                HideBossUI();
             }
         }
     }
 
     public void HideBossUI()
     {
+        if (!isBossActive) return;
         isBossActive = false;
 
         CanvasGroup cg = bossUIPanel.GetComponent<CanvasGroup>();

@@ -1,19 +1,28 @@
 using UnityEngine;
-using Unity.Cinemachine; 
+using Unity.Cinemachine;
 using System.Collections;
+using StarterAssets;
 
 public class EnemyCutsceneTrigger : MonoBehaviour
 {
-    public CinemachineCamera enemyVcam; 
+    [Header("Cinemachine Settings")]
+    public CinemachineCamera enemyVcam;
     public float cutsceneDuration = 3f;
+
+    [Header("UI Management")]
+    [Tooltip("Tarik Canvas atau Panel Utama yang berisi semua UI game (HP, Mana, Peta, dll)")]
+    public GameObject mainGameUI;
+
+    [Tooltip("Tarik Panel Quest spesifik yang ingin dimunculkan setelah/saat cutscene")]
+    public GameObject questPanel;
+
     private bool hasTriggered = false;
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && !hasTriggered)
         {
-            Player_Controlled_2 playerScript = other.GetComponent<Player_Controlled_2>();
-
+            PlayerControl playerScript = other.GetComponent<PlayerControl>();
             if (playerScript != null)
             {
                 StartCoroutine(PlayCutscene(playerScript));
@@ -21,21 +30,55 @@ public class EnemyCutsceneTrigger : MonoBehaviour
         }
     }
 
-    IEnumerator PlayCutscene(Player_Controlled_2 player)
+    IEnumerator PlayCutscene(PlayerControl player)
     {
         hasTriggered = true;
 
-        player.canControl = false;
+        // 1. SEMBUNYIKAN SEMUA UI
+        if (mainGameUI != null) mainGameUI.SetActive(false);
+        // Pastikan Quest Panel juga mati jika sebelumnya sempat menyala
+        if (questPanel != null) questPanel.SetActive(false);
 
-        Animator a = player.GetComponentInChildren<Animator>();
-        a.Play("Idle01", 0, 0f);
+        // 2. MATIKAN KONTROL PLAYER
+        var movement = player.GetComponent<PlayerMovement2>();
+        player.enabled = false;
+        if (movement != null)
+        {
+            movement.canMove = false;
+            movement.enabled = false;
+        }
 
-        enemyVcam.Priority = 20;
+        // 3. ANIMASI IDLE
+        Animator anim = player.GetComponentInChildren<Animator>();
+        if (anim != null)
+        {
+            anim.SetFloat("Speed", 0f);
+            anim.Play("Idle", 0, 0f);
+        }
+
+        // 4. AKTIVASI KAMERA CUTSCENE
+        if (enemyVcam != null) enemyVcam.Priority = 20;
+
+        // --- DURASI CUTSCENE BERLANGSUNG ---
         yield return new WaitForSeconds(cutsceneDuration);
 
-        enemyVcam.Priority = 1;
+        // 5. KEMBALIKAN KAMERA KE PLAYER
+        if (enemyVcam != null) enemyVcam.Priority = 1;
 
-        player.canControl = true;
+        // 6. HIDUPKAN KEMBALI UI
+        yield return new WaitForSeconds(2f);
+        if (mainGameUI != null) mainGameUI.SetActive(true);
+
+        // 7. MUNCULKAN QUEST PANEL (Khusus untuk tutorial ini)
+        if (questPanel != null) questPanel.SetActive(true);
+
+        // 8. HIDUPKAN KONTROL PLAYER
+        player.enabled = true;
+        if (movement != null)
+        {
+            movement.enabled = true;
+            movement.canMove = true;
+        }
 
         Destroy(gameObject);
     }

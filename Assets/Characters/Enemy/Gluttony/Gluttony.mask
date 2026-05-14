@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Gluttony
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: DragonBoar
+    m_Weight: 0
+  - m_Path: Root
+    m_Weight: 1
+  - m_Path: Root/joint5
+    m_Weight: 1
+  - m_Path: Root/joint5/joint6
+    m_Weight: 1
+  - m_Path: Root/joint5/joint6/joint7
+    m_Weight: 1
+  - m_Path: Root/joint5/joint6/joint7/joint8
+    m_Weight: 1
+  - m_Path: Root/L_UpperLeg
+    m_Weight: 0
+  - m_Path: Root/L_UpperLeg/L_LowerLeg
+    m_Weight: 0
+  - m_Path: Root/L_UpperLeg/L_LowerLeg/L_Feet
+    m_Weight: 0
+  - m_Path: Root/L_UpperLeg/L_LowerLeg/L_Feet/L_Toes
+    m_Weight: 0
+  - m_Path: Root/R_UpperReg
+    m_Weight: 0
+  - m_Path: Root/R_UpperReg/R_RowerReg
+    m_Weight: 0
+  - m_Path: Root/R_UpperReg/R_RowerReg/R_Feet
+    m_Weight: 0
+  - m_Path: Root/R_UpperReg/R_RowerReg/R_Feet/R_Toes
+    m_Weight: 0
+  - m_Path: Root/Spine1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Jaw1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Jaw1/Jaw2
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Jaw1/Jaw2/Jaw3
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/L_Horn1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/L_Horn1/L_Horn2
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/R_Horn1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/R_Horn1/R_Horn2
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Tongue1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Tongue1/Tongue2
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/Tongue1/Tongue2/Tongue3
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1/L_LowerEye
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1/L_UpperEye
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1/R_LowerEye
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1/R_UpperEye
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/Head/UpperMouth1/UpperMouth2
+    m_Weight: 1
+  - m_Path: Root/Spine1/Chest/L_UpperArm
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/L_UpperArm/L_LowerArm
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/L_UpperArm/L_LowerArm/L_Hand
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/L_UpperArm/L_LowerArm/L_Hand/L_Fingers
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/R_UpperArm
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/R_UpperArm/R_RowerArm
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/R_UpperArm/R_RowerArm/R_Hand
+    m_Weight: 0
+  - m_Path: Root/Spine1/Chest/R_UpperArm/R_RowerArm/R_Hand/R_Fingers
+    m_Weight: 0
+  - m_Path: Root_CTRL
+    m_Weight: 0

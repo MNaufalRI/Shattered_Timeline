@@ -186,10 +186,14 @@ public class PlayerControl : MonoBehaviour
         int attackIndex = Random.Range(1, 4);
         float distance = Vector3.Distance(transform.position, target.position);
 
-        if (distance > strikeRange)
+        // SEKARANG: Menggunakan jarak dinamis berdasarkan ukuran musuh
+        float dynamicRange = GetDynamicStrikeRange(strikeRange);
+
+        if (distance > dynamicRange)
         {
             if (approachCoroutine != null) StopCoroutine(approachCoroutine);
-            approachCoroutine = StartCoroutine(ApproachAndAttack(target, attackIndex));
+            // Kirim dynamicRange ke Coroutine
+            approachCoroutine = StartCoroutine(ApproachAndAttack(target, attackIndex, dynamicRange));
         }
         else
         {
@@ -197,14 +201,15 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
-    IEnumerator ApproachAndAttack(Transform targetNode, int attackIndex)
+    IEnumerator ApproachAndAttack(Transform targetNode, int attackIndex, float range)
     {
         isAttacking = true;
         isApproaching = true;
 
-        SetActiveRadius(strikeRange);
+        SetActiveRadius(range);
 
-        while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > strikeRange)
+        // SEKARANG: Berhenti saat mencapai radius luar musuh
+        while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > range)
         {
             if (!isApproaching)
             {
@@ -214,11 +219,10 @@ public class PlayerControl : MonoBehaviour
             FaceThis(targetNode.position);
 
             float currentMoveSpeed = isSprinting ? autoSprintSpeed : autoWalkSpeed;
-
             anim.SetFloat("Speed", currentMoveSpeed);
             anim.SetFloat("MotionSpeed", isSprinting ? 1.5f : 1f);
-            float step = currentMoveSpeed * Time.deltaTime;
 
+            float step = currentMoveSpeed * Time.deltaTime;
             Vector3 targetPos = new Vector3(targetNode.position.x, transform.position.y, targetNode.position.z);
             transform.position = Vector3.MoveTowards(transform.position, targetPos, step);
             yield return null;
@@ -523,11 +527,15 @@ public class PlayerControl : MonoBehaviour
         canDash = false;
         isAttacking = true;
 
-        if (anim != null) anim.SetTrigger("Dash");
+        // Ambil referensi CharacterController dari script movement
+        // Kita asumsikan CharacterController ada di objek yang sama
+        CharacterController controller = GetComponent<CharacterController>();
 
+        if (anim != null) anim.SetTrigger("Dash");
         if (meshTrail != null) meshTrail.SetTrailActive(true);
         if (playerStats != null) playerStats.isInvincible = true;
 
+        // Matikan kontrol input manual selama dash
         if (thirdPersonController != null) thirdPersonController.canMove = false;
 
         Vector3 dashDir = transform.forward;
@@ -535,7 +543,18 @@ public class PlayerControl : MonoBehaviour
 
         while (Time.time < startTime + dashTime)
         {
-            transform.position += dashDir * dashForce * Time.deltaTime;
+            if (controller != null)
+            {
+                // MENGGUNAKAN .Move() agar sistem collision Unity bekerja
+                // Ini akan membuat karakter terhenti jika menabrak Collider
+                controller.Move(dashDir * dashForce * Time.deltaTime);
+            }
+            else
+            {
+                // Fallback jika CharacterController tidak ditemukan (opsional)
+                transform.position += dashDir * dashForce * Time.deltaTime;
+            }
+
             yield return null;
         }
 
@@ -564,6 +583,8 @@ public class PlayerControl : MonoBehaviour
     {
         currentPotionCharges--;
 
+        if (anim != null) anim.SetTrigger("Drink");
+
         // Panggil efek di PlayerStats
         playerStats.ApplyPotionEffect(25f, 1f, 5f);
 
@@ -575,5 +596,18 @@ public class PlayerControl : MonoBehaviour
         }
 
         Debug.Log($"<color=green>Potion digunakan! Sisa: {currentPotionCharges}</color>");
+    }
+    private float GetDynamicStrikeRange(float baseRange)
+    {
+        if (target == null) return baseRange;
+
+        float bodyRadius = enemyBodyRadius;
+        Collider targetCol = target.GetComponent<Collider>();
+        if (targetCol != null)
+        {
+            // Mengambil setengah lebar bounds musuh
+            bodyRadius = targetCol.bounds.extents.x + 0.2f;
+        }
+        return baseRange + bodyRadius;
     }
 }
