@@ -11,9 +11,12 @@ public class LoadingManager : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private GameObject loadingScreen;
-    // Slider dihapus untuk mencegah error NULL target
     [SerializeField] private TextMeshProUGUI progressText;
     [SerializeField] private CanvasGroup canvasGroup;
+
+    [Header("Image Target")]
+    [Tooltip("Tarik UI Image (jam/ikon) yang ingin diputar ke sini")]
+    [SerializeField] private RectTransform loadingImage;
 
     private void Awake()
     {
@@ -30,7 +33,6 @@ public class LoadingManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-        // Bersihkan semua tween aktif agar tidak memory leak
         DOTween.KillAll();
         StartCoroutine(LoadAsynchronously(sceneName));
     }
@@ -43,6 +45,12 @@ public class LoadingManager : MonoBehaviour
             yield break;
         }
 
+        if (loadingImage != null)
+        {
+            loadingImage.DOKill();
+            loadingImage.localRotation = Quaternion.identity;
+        }
+
         loadingScreen.SetActive(true);
         canvasGroup.DOKill();
         canvasGroup.alpha = 0;
@@ -53,23 +61,43 @@ public class LoadingManager : MonoBehaviour
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
         operation.allowSceneActivation = false;
 
+        float dotTimer = 0f;
+        int dotCount = 0;
+
+        bool isRotating = false;
+
         while (!operation.isDone)
         {
-            // Tetap hitung progress untuk update teks persentase
-            float progress = Mathf.Clamp01(operation.progress / 0.9f);
-
-            if (progressText != null)
+            if (Input.anyKeyDown || Input.GetMouseButtonDown(0))
             {
-                progressText.text = (progress * 100f).ToString("F0") + "%";
+                if (loadingImage != null && !isRotating)
+                {
+                    isRotating = true;
+                    loadingImage.DOLocalRotate(new Vector3(0, 0, 180), 1f, RotateMode.LocalAxisAdd)
+                                .SetEase(Ease.InOutQuad) 
+                                .OnComplete(() => isRotating = false);
+                }
             }
 
-            if (operation.progress >= 0.9f)
+            if (operation.progress < 0.9f)
+            {
+                dotTimer += Time.deltaTime;
+                if (dotTimer >= 0.4f) 
+                {
+                    dotTimer = 0f;
+                    dotCount++;
+                    if (dotCount > 3) dotCount = 0;
+                    string dots = new string('.', dotCount);
+                    if (progressText != null) progressText.text = "Loading" + dots;
+                }
+            }
+            else
             {
                 if (progressText != null) progressText.text = "Press Any Key to Continue";
 
-                if (Input.anyKeyDown)
+                if (Input.anyKeyDown || Input.GetMouseButtonDown(0))
                 {
-                    yield return new WaitForSeconds(0.2f);
+                    yield return new WaitForSeconds(0.1f); 
                     operation.allowSceneActivation = true;
                 }
             }

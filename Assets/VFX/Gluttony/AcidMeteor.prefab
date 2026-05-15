@@ -173,4 +173,4 @@ MonoBehaviour:
   timeToDestroyAfterHit: 0.8
   explosionRadius: 7
   explosionDamage: 15
-  acidPuddlePrefab: {fileID: 1716671896884830221, guid: 35236cdcbb332554ca1ec3e91f6e0cbe, type: 3}
+  acidPuddlePrefab: {fileID: 5751470709293572777, guid: b2d65a6fccc15c748862eb0c5af7a0cc, type: 3}

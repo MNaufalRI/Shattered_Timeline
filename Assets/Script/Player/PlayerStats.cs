@@ -2,7 +2,6 @@ using StarterAssets;
 using System.Collections;
 using UnityEngine;
 
-// Namespace Eliot dihapus agar tidak ada konflik lagi
 public class PlayerStats : MonoBehaviour
 {
     [Header("Basic Stats")]
@@ -12,7 +11,6 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float _currentMana = 50f;
     [SerializeField] private float _baseDamage = 20f;
 
-    // Properti publik agar script lain (seperti UI) tetap bisa akses dengan nama yang sama
     public float currentHealth => _currentHealth;
     public float maxHealth => _maxHealth;
     public float currentMana => _currentMana;
@@ -55,9 +53,12 @@ public class PlayerStats : MonoBehaviour
     private float lastHealth;
     private float lastMana;
 
+    [Header("Potion Inventory")]
+    public int maxPotions = 3;
+    public int currentPotions = 3;
+
     void Awake()
     {
-        // EliotAgent dan AgentResources dihapus dari sini
         anim = GetComponentInChildren<Animator>();
         controller = GetComponent<PlayerMovement2>();
     }
@@ -86,7 +87,6 @@ public class PlayerStats : MonoBehaviour
             return;
         }
 
-        // Dirty Flag Optimization
         if (_currentHealth != lastHealth || _currentMana != lastMana)
         {
             UpdateUI();
@@ -136,7 +136,6 @@ public class PlayerStats : MonoBehaviour
     public bool UseMana(float amount)
     {
         if (_currentMana < amount) return false;
-
         _currentMana -= amount;
         UpdateUI();
         return true;
@@ -189,11 +188,8 @@ public class PlayerStats : MonoBehaviour
         {
             Vector3 spawnPos = vfxSpawnPoint != null ? vfxSpawnPoint.position : transform.position;
             Quaternion spawnRot = vfxSpawnPoint != null ? vfxSpawnPoint.rotation : Quaternion.identity;
-
             GameObject vfxInstance = Instantiate(potionVFXPrefab, spawnPos, spawnRot);
-
             vfxInstance.transform.SetParent(vfxSpawnPoint != null ? vfxSpawnPoint : transform);
-
             Destroy(vfxInstance, duration > 0 ? duration : 3f);
         }
         StartCoroutine(PotionRegenRoutine(regenAmount, duration));
@@ -218,6 +214,8 @@ public class PlayerStats : MonoBehaviour
         healthRegenAccumulator = 0;
         manaRegenAccumulator = 0;
 
+        ResetBossArena();
+
         StartCoroutine(RespawnRoutine());
         UpdateUI();
     }
@@ -229,6 +227,9 @@ public class PlayerStats : MonoBehaviour
 
         _currentHealth = _maxHealth;
         _currentMana = _maxMana;
+        currentPotions = maxPotions; 
+
+        ClearDebuffs();
 
         CharacterController cc = GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
@@ -250,6 +251,9 @@ public class PlayerStats : MonoBehaviour
 
         UpdateUI();
         if (fader != null) yield return StartCoroutine(fader.FadeIn());
+
+        // --- BERIKAN KEKEBALAN 3 DETIK SETELAH BANGUN ---
+        StartCoroutine(SpawnImmunityRoutine(3f));
     }
 
     public void ApplyStun(float duration)
@@ -294,9 +298,53 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    // Tambahkan ini di dalam kelas PlayerStats
     public void SetSpawnPoint(Vector3 newPos)
     {
         currentSpawnPoint = newPos;
+    }
+
+    // --- FUNGSI BARU UNTUK MEMBERSIHKAN DEBUFF ---
+    private void ClearDebuffs()
+    {
+        // 1. Hilangkan Stun
+        isStunned = false;
+        if (anim != null) anim.SetBool("isStunned", false);
+
+        // 2. Kembalikan Kecepatan Asli (Ubah angka ini sesuai nilai default script PlayerMovement2 kamu)
+        if (controller != null)
+        {
+            controller.MoveSpeed = 5.0f;   // Contoh nilai default
+            controller.SprintSpeed = 10.0f; // Contoh nilai default
+        }
+    }
+
+    // --- FUNGSI BARU UNTUK KEKEBALAN SETELAH RESPAWN ---
+    private IEnumerator SpawnImmunityRoutine(float duration)
+    {
+        isInvincible = true;
+        Debug.Log("<color=cyan>Player is Immune for 3 Seconds!</color>");
+
+        yield return new WaitForSeconds(duration);
+
+        isInvincible = false;
+        Debug.Log("<color=cyan>Player Immunity Ended.</color>");
+    }
+
+    // --- FUNGSI BARU UNTUK MERESET BOSS SAAT MATI ---
+    private void ResetBossArena()
+    {
+        // Panggil fungsi Reset di Boss (Jika ada boss di scene)
+        DragonBoarStats[] bosses = FindObjectsOfType<DragonBoarStats>();
+        foreach (var boss in bosses)
+        {
+            boss.ResetBossState();
+        }
+
+        // Panggil fungsi Reset di Trigger Arena
+        BossArenaTrigger[] triggers = FindObjectsOfType<BossArenaTrigger>();
+        foreach (var trigger in triggers)
+        {
+            trigger.ResetTrigger();
+        }
     }
 }

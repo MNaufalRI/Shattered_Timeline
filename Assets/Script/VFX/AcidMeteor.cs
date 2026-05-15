@@ -68,10 +68,4 @@ public class AcidMeteor : MonoBehaviour
         }
     }
 
-    // Untuk membantu melihat radius ledakan Hitbox di Editor
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, explosionRadius);
-    }
 }

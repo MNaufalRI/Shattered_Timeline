@@ -11,7 +11,6 @@ public class BossHealthUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossNameText;
 
     [Header("Boss Reference")]
-    // Sekarang mereferensikan langsung ke script GluttonyBase
     public DragonBoarStats bossBase;
     public string bossName = "Gluttony";
 
@@ -38,10 +37,11 @@ public class BossHealthUI : MonoBehaviour
             float healthPercentage = bossBase.currentHealth / bossBase.maxHealth;
             animatedHealthFill.fillAmount = healthPercentage;
 
-            // Efek muncul (Fade In) jika ada CanvasGroup
+            // Efek muncul (Fade In)
             CanvasGroup cg = bossUIPanel.GetComponent<CanvasGroup>();
             if (cg != null)
             {
+                cg.DOKill(); // Hentikan animasi sebelumnya (jika ada)
                 cg.alpha = 0f;
                 bossUIPanel.SetActive(true);
                 cg.DOFade(1, 0.5f);
@@ -68,17 +68,19 @@ public class BossHealthUI : MonoBehaviour
             float targetFill = Mathf.Clamp01(bossBase.currentHealth / bossBase.maxHealth);
 
             // 2. Animasikan perubahan Fill Amount menggunakan DOTween
+            animatedHealthFill.DOKill(); // Hentikan animasi darah sebelumnya agar tidak bug
             animatedHealthFill.DOFillAmount(targetFill, 0.3f).SetEase(Ease.OutQuad);
 
             // 3. Jika darah habis, sembunyikan UI
             if (bossBase.currentHealth <= 0)
             {
-                HideBossUI();
+                DeactivateBossUI(); // <-- NAMA FUNGSI DIUBAH DI SINI
             }
         }
     }
 
-    public void HideBossUI()
+    // --- NAMA FUNGSI DIUBAH DARI HideBossUI MENJADI DeactivateBossUI ---
+    public void DeactivateBossUI()
     {
         if (!isBossActive) return;
         isBossActive = false;
@@ -86,6 +88,7 @@ public class BossHealthUI : MonoBehaviour
         CanvasGroup cg = bossUIPanel.GetComponent<CanvasGroup>();
         if (cg != null)
         {
+            cg.DOKill(); // Hentikan animasi muncul jika masih berjalan
             cg.DOFade(0, 1f).OnComplete(() => bossUIPanel.SetActive(false));
         }
         else
