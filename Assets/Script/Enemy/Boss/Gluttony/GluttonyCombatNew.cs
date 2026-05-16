@@ -25,11 +25,11 @@ public class DragonBoarCombat : MonoBehaviour
     [Header("Gluttony Settings")]
     public float gluttonyAnimDuration = 3f;
     public float extraStunTime = 4f;
-    public float pullSpeed = 5f; // Kecepatan sedotan boss
-    public float suckDuration = 2f; // Berapa lama boss menyedot sebelum stun
-    public float maxDistanceTrigger = 15f; // Jarak untuk auto-trigger Gluttony
-    public float autoSkillCooldown = 15f; // Waktu aman di awal game (15 detik)
-    public float gluttonyAutoCooldown = 20f; // Jeda 20 detik antar auto-skill
+    public float pullSpeed = 5f; 
+    public float suckDuration = 2f; 
+    public float maxDistanceTrigger = 15f;
+    public float autoSkillCooldown = 15f; 
+    public float gluttonyAutoCooldown = 20f; 
     private float gluttonyAutoTimer = 0f;
     public Transform gluttonyPullTarget;
 
@@ -62,17 +62,17 @@ public class DragonBoarCombat : MonoBehaviour
     [Range(0f, 100f)] public float rottenExpulsionChance = 20f;
 
     [Header("VFX Settings")]
-    public GameObject gluttonyVFXPrefab; // Pasang prefab partikel sedotan di sini
-    public Transform GluttonyTransform;     // Posisi asal sedotan (misal di mulut)
-    public GameObject activeVFX;        // Untuk menyimpan instance yang sedang jalan
-    public GameObject heavyAttackVFXPrefab; // Prefab ledakan/impact
+    public GameObject gluttonyVFXPrefab; 
+    public Transform GluttonyTransform;    
+    public GameObject activeVFX;      
+    public GameObject heavyAttackVFXPrefab; 
     public Transform heavyAttackVFXTransform;
 
-    private bool isStealingSpeed = false; // Mencegah dobel efek Steal
+    private bool isStealingSpeed = false; 
     public bool isActivated = false;
 
     [Header("Cutscene UI")]
-    public CanvasGroup bossTitleCanvasGroup; // Masukkan UI Text Name yang sudah dibungkus CanvasGroup
+    public CanvasGroup bossTitleCanvasGroup; 
     public float fadeDuration = 1f;
 
     private void Start()
@@ -98,7 +98,16 @@ public class DragonBoarCombat : MonoBehaviour
 
     private void Update()
     {
-        if (stats.isDead || player == null) return;
+        if (stats.isDead || player == null || (playerStats != null && playerStats.isDead))
+        {
+            if (isAttacking)
+            {
+                ForceStopGluttonyVFX();
+                StopAllCoroutines();    
+                ResetAttack();          
+            }
+            return;
+        }
         if (!isActivated) return;
 
         gameTimer += Time.deltaTime;
@@ -109,8 +118,6 @@ public class DragonBoarCombat : MonoBehaviour
         if (attackTimer > 0) attackTimer -= Time.deltaTime;
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-
-        // --- LOGIKA KHUSUS: GLUTTONY AUTO-TRIGGER ---
         if (gameTimer >= 15f && distanceToPlayer > maxDistanceTrigger && gluttonyAutoTimer <= 0)
         {
             StartCoroutine(GluttonyRoutine());
@@ -125,7 +132,6 @@ public class DragonBoarCombat : MonoBehaviour
 
         if (distanceToPlayer <= attackRange)
         {
-            // Berhenti dan hadap player
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
             anim.SetFloat("Speed", 0f);
@@ -154,7 +160,6 @@ public class DragonBoarCombat : MonoBehaviour
         }
     }
 
-    // Panggil event ini di AKHIR animasi teriak
     public void HideBossTitle()
     {
         if (bossTitleCanvasGroup != null)
@@ -164,7 +169,6 @@ public class DragonBoarCombat : MonoBehaviour
         }
     }
 
-    // Coroutine untuk mengatur transparansi (Alpha) perlahan
     private IEnumerator FadeTitle(float startAlpha, float targetAlpha)
     {
         float timer = 0f;
@@ -182,10 +186,9 @@ public class DragonBoarCombat : MonoBehaviour
 
     private void ChooseRandomAttack()
     {
-        // Hitung total chance tanpa Gluttony dulu
+
         float totalChance = basicAttackChance + heavyAttackChance + rottenExpulsionChance;
 
-        // HANYA masukkan Gluttony ke dalam "Gacha" jika cooldown 20 detiknya sudah habis
         if (gluttonyAutoTimer <= 0)
         {
             totalChance += gluttonyChance;
@@ -201,7 +204,6 @@ public class DragonBoarCombat : MonoBehaviour
         {
             StartCoroutine(HeavyAttackRoutine(false));
         }
-        // Pastikan juga di sini mengecek gluttonyAutoTimer
         else if (gluttonyAutoTimer <= 0 && rand < basicAttackChance + heavyAttackChance + gluttonyChance)
         {
             StartCoroutine(GluttonyRoutine());
@@ -236,7 +238,6 @@ public class DragonBoarCombat : MonoBehaviour
         isAttacking = true;
         timeSinceLastAttack = 0f;
 
-        // Pengaturan kecepatan berdasarkan mode
         if (agent != null && agent.isOnNavMesh)
         {
             agent.speed = isRageMode ? rageChargeSpeed : chargeSpeed;
@@ -248,7 +249,6 @@ public class DragonBoarCombat : MonoBehaviour
         bool hasTriggeredAnim = false;
         float chaseTimeout = 5f;
 
-        // --- FASE 1: MENGEJAR ---
         while (Vector3.Distance(transform.position, player.position) > attackRange && chaseTimeout > 0)
         {
             chaseTimeout -= Time.deltaTime;
@@ -268,7 +268,6 @@ public class DragonBoarCombat : MonoBehaviour
             yield return null;
         }
 
-        // --- FASE 2: WIND-UP (PERSIAPAN) ---
         if (agent != null && agent.isOnNavMesh)
         {
             agent.isStopped = true;
@@ -287,7 +286,6 @@ public class DragonBoarCombat : MonoBehaviour
         {
             if (isRageMode && player != null)
             {
-                // Boss tetap melacak posisi player saat ancang-ancang
                 Vector3 lookPos = player.position - transform.position;
                 lookPos.y = 0;
                 if (lookPos != Vector3.zero)
@@ -299,16 +297,11 @@ public class DragonBoarCombat : MonoBehaviour
             yield return null;
         }
 
-        // --- FASE 3: HIT LOGIC (AREA OVERLAP) ---
-
-        // Titik pusat ledakan (Gunakan transform VFX, jika kosong gunakan posisi depan boss)
         Vector3 impactPoint = (heavyAttackVFXTransform != null) ? heavyAttackVFXTransform.position : transform.position + transform.forward * 2f;
 
-        // Radius ledakan (Sedikit lebih besar saat Rage)
         float coneRadius = isRageMode ? 10f : 9f; 
         float coneAngle = isRageMode ? 75f : 80f;
 
-        // Deteksi objek di area ledakan
         Collider[] hitColliders = Physics.OverlapSphere(impactPoint, coneRadius);
         bool playerInCone = false;
 
@@ -321,10 +314,10 @@ public class DragonBoarCombat : MonoBehaviour
             }
         }
 
-        // Eksekusi Damage & Stun
-        if (playerInCone || isRageMode) // Rage Mode dianggap serangan area yang sangat luas/homing
+
+        if (playerInCone || isRageMode) 
         {
-            // Tentukan nilai berdasarkan mode
+
             float damageToDeal = isRageMode ? 15f : 10f;
             float stunDuration = isRageMode ? 2f : 1f;
 
@@ -338,7 +331,6 @@ public class DragonBoarCombat : MonoBehaviour
             Debug.Log($"<color=red>Heavy Attack Hit! Mode Rage: {isRageMode}, Damage: {damageToDeal}</color>");
         }
 
-        // Selesai, biarkan Animation Event ResetAttack yang mengambil alih kontrol isAttacking
         yield break;
     }
 
@@ -351,10 +343,8 @@ public class DragonBoarCombat : MonoBehaviour
 
         if (heavyAttackVFXPrefab != null && heavyAttackVFXTransform != null)
         {
-            // Munculkan VFX sesuai posisi dan rotasi transform yang ditentukan
             GameObject vfx = Instantiate(heavyAttackVFXPrefab, heavyAttackVFXTransform.position, heavyAttackVFXTransform.rotation);
 
-            // Hapus VFX setelah beberapa detik agar tidak memenuhi memori (sampah)
             Destroy(vfx, 3f);
         }
 
@@ -397,6 +387,7 @@ public class DragonBoarCombat : MonoBehaviour
         float timer = 0f;
         while (timer < suckDuration)
         {
+            if (playerStats != null && playerStats.isDead) break;
             timer += Time.deltaTime;
             if (player != null && controller != null)
         {
@@ -415,6 +406,12 @@ public class DragonBoarCombat : MonoBehaviour
             }
         }
         yield return null;
+        }
+
+        if (playerStats != null && playerStats.isDead)
+        {
+            ForceStopGluttonyVFX();
+            yield break; 
         }
 
         if (activeVFX != null)
@@ -445,33 +442,33 @@ public class DragonBoarCombat : MonoBehaviour
 
     private IEnumerator GluttonySpeedStealRoutine(PlayerMovement2 playerMove)
     {
-        // Jika efek Steal masih berjalan, JANGAN tumpuk lagi (Fail-safe)
+    
         if (isStealingSpeed) yield break;
         isStealingSpeed = true;
 
-        // --- MULAI EFEK STEAL SPEED ---
+       
         if (playerMove != null)
         {
             playerMove.enabled = true; 
 
-            // Kembalikan dulu dari debuff 0.2f (fase sedot), lalu terapkan debuff 40% (dikali 0.6f)
+           
             playerMove.MoveSpeed = (playerMove.MoveSpeed / 0.2f) * 0.6f;
             playerMove.SprintSpeed = (playerMove.SprintSpeed / 0.2f) * 0.6f;
         }
 
-        // Simpan speed boss sebelum buff 40%
+    
         float originalSpeedBeforeSteal = normalSpeed;
 
-        // Tambah speed boss 40%
+      
         normalSpeed *= 1.4f;
         if (agent != null) agent.speed = normalSpeed;
 
         Debug.Log("<color=orange>Gluttony Speed Steal Active! (5 Seconds)</color>");
 
-        // --- TUNGGU 5 DETIK ---
+    
         yield return new WaitForSeconds(5f);
 
-        // --- KEMBALIKAN KE KONDISI NORMAL PHASE 2 ---
+   
         if (playerMove != null)
         {
             playerMove.MoveSpeed /= 0.6f;
@@ -497,7 +494,7 @@ public class DragonBoarCombat : MonoBehaviour
     {
         isAttacking = false;
 
-        // Pastikan agent aman sebelum diubah nilainya
+    
         if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
         {
             agent.speed = normalSpeed;
@@ -538,12 +535,12 @@ public class DragonBoarCombat : MonoBehaviour
         }
         if (projectileUpPrefab != null && mouthTransform != null)
     {
-        // Munculkan efek semburan ke atas
+       
         GameObject spit = Instantiate(projectileUpPrefab, mouthTransform.position, mouthTransform.rotation);
         Destroy(spit, 1f);
     }
 
-    // Jalankan hujan meteor
+
     StartCoroutine(SpawnMeteorsSequence());
     
     Debug.Log("<color=green>Acid Spit VFX Triggered via Animation Event!</color>");
@@ -567,18 +564,14 @@ public class DragonBoarCombat : MonoBehaviour
 
     public void ApplyPhase2CombatBuffs()
     {
-        // 1. Tambah 1 meteor permanen
+ 
         meteorCount += 1;
 
-        // 2. Tambah damage 20%
         basicAttackDamage *= 1.2f;
         heavyAttackDamage *= 1.2f;
-
-        // 3. Tambah speed boss 30% permanen
-        // SANGAT PENTING: Update normalSpeed agar tidak tertimpa saat ResetAttack()
         normalSpeed *= 1.3f;
-        chargeSpeed *= 1.3f;     // Opsional: Charge berat juga makin cepat
-        rageChargeSpeed *= 1.3f; // Opsional: Rage charge makin cepat
+        chargeSpeed *= 1.3f;    
+        rageChargeSpeed *= 1.3f;
 
         if (!isAttacking && agent != null)
         {
@@ -588,5 +581,18 @@ public class DragonBoarCombat : MonoBehaviour
         Debug.Log("<color=yellow>Phase 2 Combat Buffs Applied! Damage, Speed, and Meteor increased.</color>");
     }
 
+    public void ForceStopGluttonyVFX()
+    {
+        if (activeVFX != null)
+        {
+            Destroy(activeVFX);
+            activeVFX = null;
+        }
+    }
+
+    private void OnDisable()
+    {
+        ForceStopGluttonyVFX();
+    }
 
 }

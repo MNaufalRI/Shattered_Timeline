@@ -23,6 +23,7 @@ public class BossArenaTrigger : MonoBehaviour
     public float uiFadeSpeed = 2f;
 
     private bool hasTriggered = false;
+    public BossQuestManager questManager;
 
     private void Start()
     {
@@ -47,6 +48,10 @@ public class BossArenaTrigger : MonoBehaviour
             {
                 // Jika masih Phase 1, mainkan cutscene normal
                 StartCoroutine(PlayCutsceneSequence());
+            }
+            if (questManager != null)
+            {
+                questManager.StartBossFight();
             }
         }
     }

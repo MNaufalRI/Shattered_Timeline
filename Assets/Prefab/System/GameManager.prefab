@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4343904430223572837}
   - component: {fileID: 2849902905499524998}
+  - component: {fileID: 3552211786551217269}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -44,3 +45,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95a59382a8e9c0748be47b4f5b93e837, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSettings
+--- !u!114 &3552211786551217269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9188957810657604290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d77229d097901464295bb7150eadf053, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  pauseMenuPanel: {fileID: 0}
+  mainButtonsPanel: {fileID: 0}
+  settingsPanel: {fileID: 0}
+  audioMixer: {fileID: 0}
+  starterAssetsInputs: {fileID: 0}

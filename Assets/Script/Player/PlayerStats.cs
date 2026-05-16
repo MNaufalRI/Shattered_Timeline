@@ -70,6 +70,14 @@ public class PlayerStats : MonoBehaviour
         lastHealth = _currentHealth;
         lastMana = _currentMana;
 
+        currentPotions = maxPotions;
+
+        PlayerControl pControl = GetComponent<PlayerControl>();
+        if (pControl != null)
+        {
+            pControl.RefreshPotionUI(currentPotions);
+        }
+
         UpdateUI();
     }
 
@@ -125,7 +133,7 @@ public class PlayerStats : MonoBehaviour
         {
             PlayerDie();
         }
-        else if (anim != null)
+        else if (anim != null && !isStunned)
         {
             anim.ResetTrigger("Hit");
             anim.SetTrigger("Hit");
@@ -227,7 +235,12 @@ public class PlayerStats : MonoBehaviour
 
         _currentHealth = _maxHealth;
         _currentMana = _maxMana;
-        currentPotions = maxPotions; 
+        currentPotions = maxPotions;
+        PlayerControl pControl = GetComponent<PlayerControl>();
+        if (pControl != null)
+        {
+            pControl.RefreshPotionUI(currentPotions);
+        }
 
         ClearDebuffs();
 
@@ -251,8 +264,6 @@ public class PlayerStats : MonoBehaviour
 
         UpdateUI();
         if (fader != null) yield return StartCoroutine(fader.FadeIn());
-
-        // --- BERIKAN KEKEBALAN 3 DETIK SETELAH BANGUN ---
         StartCoroutine(SpawnImmunityRoutine(3f));
     }
 
@@ -303,22 +314,18 @@ public class PlayerStats : MonoBehaviour
         currentSpawnPoint = newPos;
     }
 
-    // --- FUNGSI BARU UNTUK MEMBERSIHKAN DEBUFF ---
     private void ClearDebuffs()
     {
-        // 1. Hilangkan Stun
         isStunned = false;
         if (anim != null) anim.SetBool("isStunned", false);
 
-        // 2. Kembalikan Kecepatan Asli (Ubah angka ini sesuai nilai default script PlayerMovement2 kamu)
         if (controller != null)
         {
-            controller.MoveSpeed = 5.0f;   // Contoh nilai default
-            controller.SprintSpeed = 10.0f; // Contoh nilai default
+            controller.MoveSpeed = 5.0f;   
+            controller.SprintSpeed = 10.0f; 
         }
     }
 
-    // --- FUNGSI BARU UNTUK KEKEBALAN SETELAH RESPAWN ---
     private IEnumerator SpawnImmunityRoutine(float duration)
     {
         isInvincible = true;
@@ -330,17 +337,15 @@ public class PlayerStats : MonoBehaviour
         Debug.Log("<color=cyan>Player Immunity Ended.</color>");
     }
 
-    // --- FUNGSI BARU UNTUK MERESET BOSS SAAT MATI ---
     private void ResetBossArena()
     {
-        // Panggil fungsi Reset di Boss (Jika ada boss di scene)
+
         DragonBoarStats[] bosses = FindObjectsOfType<DragonBoarStats>();
         foreach (var boss in bosses)
         {
             boss.ResetBossState();
         }
 
-        // Panggil fungsi Reset di Trigger Arena
         BossArenaTrigger[] triggers = FindObjectsOfType<BossArenaTrigger>();
         foreach (var trigger in triggers)
         {

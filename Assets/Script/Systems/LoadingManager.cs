@@ -15,7 +15,7 @@ public class LoadingManager : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
 
     [Header("Image Target")]
-    [Tooltip("Tarik UI Image (jam/ikon) yang ingin diputar ke sini")]
+    [Tooltip("Tarik UI Image ke sini (Sekarang hanya akan diam)")]
     [SerializeField] private RectTransform loadingImage;
 
     private void Awake()
@@ -45,6 +45,7 @@ public class LoadingManager : MonoBehaviour
             yield break;
         }
 
+        // Memastikan gambar dalam posisi default (diam)
         if (loadingImage != null)
         {
             loadingImage.DOKill();
@@ -64,25 +65,12 @@ public class LoadingManager : MonoBehaviour
         float dotTimer = 0f;
         int dotCount = 0;
 
-        bool isRotating = false;
-
         while (!operation.isDone)
         {
-            if (Input.anyKeyDown || Input.GetMouseButtonDown(0))
-            {
-                if (loadingImage != null && !isRotating)
-                {
-                    isRotating = true;
-                    loadingImage.DOLocalRotate(new Vector3(0, 0, 180), 1f, RotateMode.LocalAxisAdd)
-                                .SetEase(Ease.InOutQuad) 
-                                .OnComplete(() => isRotating = false);
-                }
-            }
-
             if (operation.progress < 0.9f)
             {
                 dotTimer += Time.deltaTime;
-                if (dotTimer >= 0.4f) 
+                if (dotTimer >= 0.4f)
                 {
                     dotTimer = 0f;
                     dotCount++;
@@ -97,7 +85,7 @@ public class LoadingManager : MonoBehaviour
 
                 if (Input.anyKeyDown || Input.GetMouseButtonDown(0))
                 {
-                    yield return new WaitForSeconds(0.1f); 
+                    yield return new WaitForSeconds(0.1f);
                     operation.allowSceneActivation = true;
                 }
             }

@@ -47,3 +47,4 @@ MonoBehaviour:
   loadingScreen: {fileID: 0}
   progressText: {fileID: 0}
   canvasGroup: {fileID: 0}
+  loadingImage: {fileID: 0}

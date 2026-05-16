@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
-using System.Collections; // Wajib untuk Coroutine
+using System.Collections; 
 using UnityEngine.Playables;
 
 public class DragonBoarStats : MonoBehaviour, IDamageable
@@ -12,17 +12,17 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
 
     [Header("Phase 2 Settings")]
     public bool isPhase2 = false;
-    public bool isImmune = false; // Status kebal saat ganti fase
-    public float phase2TransitionTime = 3f; // Waktu diam/animasi saat berubah
-    public GameObject normalVisuals; // Masukkan Parent dari model biasa ke sini
-    public GameObject goldVisuals;   // Masukkan Parent dari model emas ke sini
-    public GameObject phase2VFXPrefab; // Efek ledakan/aura saat berubah emas
+    public bool isImmune = false; 
+    public float phase2TransitionTime = 3f;
+    public GameObject normalVisuals; 
+    public GameObject goldVisuals;  
+    public GameObject phase2VFXPrefab; 
     public bool isPhase2Ready = false;
 
     [Header("Phase 2 Cutscene (Player & Camera)")]
-    public GameObject phase2Camera;      // Kamera khusus untuk cutscene Phase 2
-    public MonoBehaviour playerMovement; // Script pergerakan player
-    public MonoBehaviour playerCombat;   // Script serangan player
+    public GameObject phase2Camera;      
+    public MonoBehaviour playerMovement; 
+    public MonoBehaviour playerCombat;   
     public PlayerStats playerStats;
 
     private Animator anim;
@@ -36,12 +36,12 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
 
     [Header("Ending Cutscene")]
     public PlayableDirector deathTimeline;
+    public BossQuestManager questManager;
 
 
 
     private void Awake()
     {
-        // Simpan posisi awal boss saat game dimulai
         initialPosition = transform.position;
         initialRotation = transform.rotation;
     }
@@ -55,7 +55,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         anim = GetComponent<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
 
-        // Pastikan visual awal benar
         if (normalVisuals != null) normalVisuals.SetActive(true);
         if (goldVisuals != null) goldVisuals.SetActive(false);
         if (phase2Camera != null) phase2Camera.SetActive(false);
@@ -97,17 +96,14 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     private IEnumerator EnterPhase2Routine()
     {
         isPhase2 = true;
-        isImmune = true; // Boss kebal selama transisi
+        isImmune = true; 
 
-
-        // --- 1. MULAI CUTSCENE (KUNCI PLAYER & PINDAH KAMERA) ---
         if (phase2Camera != null) phase2Camera.SetActive(true);
 
         if (playerMovement != null) playerMovement.enabled = false;
         if (playerCombat != null) playerCombat.enabled = false;
-        if (playerStats != null) playerStats.isInvincible = true; // Player kebal dari segala damage sisa
+        if (playerStats != null) playerStats.isInvincible = true; 
 
-        // 2. Hentikan semua aksi Boss
         if (combatScript != null)
         {
             combatScript.StopAllCoroutines();
@@ -130,26 +126,22 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             navMeshAgent.velocity = Vector3.zero;
         }
 
-        // 3. Putar Animasi Perubahan
         if (anim != null) anim.SetTrigger("Phase2");
 
-        // 4. Munculkan VFX Transisi
         if (phase2VFXPrefab != null)
         {
             Instantiate(phase2VFXPrefab, transform.position, Quaternion.identity, transform);
         }
 
-        // 5. Ganti Visual dari Biasa ke Emas
         if (normalVisuals != null) normalVisuals.SetActive(false);
         if (goldVisuals != null) goldVisuals.SetActive(true);
 
-        // --- TUNGGU CUTSCENE SELESAI ---
+ 
         yield return new WaitForSeconds(phase2TransitionTime);
 
-        // 6. Terapkan Buff Permanen
+  
         ApplyPhase2Buffs();
 
-        // --- 7. AKHIR CUTSCENE (BUKA KUNCI PLAYER & KEMBALIKAN KAMERA) ---
         if (phase2Camera != null) phase2Camera.SetActive(false);
 
         if (playerMovement != null) playerMovement.enabled = true;
@@ -161,7 +153,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             combatScript.isAttacking = false;
         }
 
-        // Lepas kekebalan boss dan biarkan bos lanjut bergerak
         isImmune = false;
         isPhase2Ready = true;
         if (navMeshAgent != null && navMeshAgent.isOnNavMesh) navMeshAgent.isStopped = false;
@@ -177,7 +168,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             navMeshAgent.speed *= 1.3f;
         }
 
-        // Panggil fungsi di script Combat untuk menambah Damage & Meteor
         if (combatScript != null)
         {
             combatScript.ApplyPhase2CombatBuffs();
@@ -188,7 +178,7 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     {
         if (isDead) return;
         isDead = true;
-        isImmune = true; // Agar tidak bisa di-hit lagi pas mati
+        isImmune = true; 
 
         if (combatScript != null)
         {
@@ -208,22 +198,24 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             navMeshAgent.enabled = false;
         }
 
+        if (questManager != null)
+        {
+            questManager.BossDefeated();
+        }
+
         Debug.Log("<color=red>DragonBoar telah dikalahkan!</color>");
     }
 
     public void PlayDeathCutscene()
     {
-        // 1. Matikan NavMeshAgent agar tidak terjadi konflik saat teleport
         if (navMeshAgent != null)
         {
             navMeshAgent.enabled = false;
         }
 
-        // 2. Kembalikan posisi dan rotasi ke awal
         transform.position = initialPosition;
         transform.rotation = initialRotation;
 
-        // 3. Jalankan Timeline
         if (deathTimeline != null)
         {
             deathTimeline.Play();
@@ -231,10 +223,8 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         }
     }
 
-    // FUNGSI BARU UNTUK MERESET BOSS (PARTIAL / SEBAGIAN)
     public void ResetBossState()
     {
-        // 1. Matikan Combat & AI
         if (combatScript != null)
         {
             combatScript.StopAllCoroutines();
@@ -248,21 +238,18 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             navMeshAgent.velocity = Vector3.zero;
         }
 
-        // 2. Tambah Darah 20% dari HP SAAT INI
         if (!isDead)
         {
             float healAmount = currentHealth * 0.20f;
             currentHealth += healAmount;
 
-            // Pastikan darah tidak melebihi maxHealth
             currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
             Debug.Log($"<color=green>Boss Healed 20%. Current HP: {currentHealth}</color>");
         }
 
-        // CATATAN: Kita TIDAK mereset isPhase2 atau isPhase2Ready agar bos tetap di mode emas
-        isImmune = false; // Pastikan kelemahannya terbuka lagi
+        isImmune = false; 
 
-        // 3. Kembalikan Boss ke posisi awal agar tidak diam di depan pintu
+
         UnityEngine.AI.NavMeshAgent agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         if (agent != null) agent.enabled = false;
 
@@ -271,14 +258,12 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
 
         if (agent != null) agent.enabled = true;
 
-        // 4. Hard Reset Animasi ke mode Idle (Tanpa merusak fase)
         if (anim != null)
         {
             anim.Rebind();
             anim.Update(0f);
         }
 
-        // 5. Matikan UI Boss di layar player sampai player masuk arena lagi
         BossHealthUI uiManager = FindObjectOfType<BossHealthUI>();
         if (uiManager != null) uiManager.DeactivateBossUI();
     }

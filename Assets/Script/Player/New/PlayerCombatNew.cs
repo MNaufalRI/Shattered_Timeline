@@ -3,6 +3,7 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.InputSystem;
 using StarterAssets;
+using UnityEngine.UI;
 
 public class PlayerControl : MonoBehaviour
 {
@@ -70,10 +71,7 @@ public class PlayerControl : MonoBehaviour
     public float enemyBodyRadius = 1.2f;
 
     [Header("Potion System")]
-    public int maxPotionCharges = 3;
-    private int currentPotionCharges = 3;
-    [SerializeField] private Animator potionAnimator;
-
+    public Image potionFillImage;
 
     void Awake()
     {
@@ -85,10 +83,7 @@ public class PlayerControl : MonoBehaviour
     {
         if (playerStats != null && playerStats.IsDead())
         {
-            // Hentikan paksa pergerakan/rotasi dari DOTween agar mayat tidak meluncur
             transform.DOKill();
-
-            // Batalkan semua status nyerang/ngejar
             if (isAttacking || isApproaching)
             {
                 if (approachCoroutine != null) StopCoroutine(approachCoroutine);
@@ -96,7 +91,7 @@ public class PlayerControl : MonoBehaviour
                 isApproaching = false;
                 HideRadius();
             }
-            return; // Berhenti memproses input/timer lainnya
+            return; 
         }
 
 
@@ -104,7 +99,6 @@ public class PlayerControl : MonoBehaviour
         if (skill2Timer > 0) skill2Timer -= Time.deltaTime;
     }
 
-    // --- FUNGSI INPUT SEND MESSAGES ---
 
     public void OnMove(InputValue value)
     {
@@ -142,7 +136,6 @@ public class PlayerControl : MonoBehaviour
     }
 
 
-    // ----------------------------------
 
     public void Attack(int attackState)
     {
@@ -186,13 +179,11 @@ public class PlayerControl : MonoBehaviour
         int attackIndex = Random.Range(1, 4);
         float distance = Vector3.Distance(transform.position, target.position);
 
-        // SEKARANG: Menggunakan jarak dinamis berdasarkan ukuran musuh
         float dynamicRange = GetDynamicStrikeRange(strikeRange);
 
         if (distance > dynamicRange)
         {
             if (approachCoroutine != null) StopCoroutine(approachCoroutine);
-            // Kirim dynamicRange ke Coroutine
             approachCoroutine = StartCoroutine(ApproachAndAttack(target, attackIndex, dynamicRange));
         }
         else
@@ -208,7 +199,6 @@ public class PlayerControl : MonoBehaviour
 
         SetActiveRadius(range);
 
-        // SEKARANG: Berhenti saat mencapai radius luar musuh
         while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > range)
         {
             if (!isApproaching)
@@ -526,16 +516,11 @@ public class PlayerControl : MonoBehaviour
     {
         canDash = false;
         isAttacking = true;
-
-        // Ambil referensi CharacterController dari script movement
-        // Kita asumsikan CharacterController ada di objek yang sama
         CharacterController controller = GetComponent<CharacterController>();
 
         if (anim != null) anim.SetTrigger("Dash");
         if (meshTrail != null) meshTrail.SetTrailActive(true);
         if (playerStats != null) playerStats.isInvincible = true;
-
-        // Matikan kontrol input manual selama dash
         if (thirdPersonController != null) thirdPersonController.canMove = false;
 
         Vector3 dashDir = transform.forward;
@@ -545,13 +530,10 @@ public class PlayerControl : MonoBehaviour
         {
             if (controller != null)
             {
-                // MENGGUNAKAN .Move() agar sistem collision Unity bekerja
-                // Ini akan membuat karakter terhenti jika menabrak Collider
                 controller.Move(dashDir * dashForce * Time.deltaTime);
             }
             else
             {
-                // Fallback jika CharacterController tidak ditemukan (opsional)
                 transform.position += dashDir * dashForce * Time.deltaTime;
             }
 
@@ -570,9 +552,8 @@ public class PlayerControl : MonoBehaviour
 
     public void OnUsePotion(InputValue value)
     {
-        if (value.isPressed && !playerStats.IsDead() && currentPotionCharges > 0)
+        if (value.isPressed && !playerStats.IsDead() && playerStats.currentPotions > 0)
         {
-            // Opsional: Jangan pakai potion kalau darah sudah penuh
             if (playerStats.currentHealth >= playerStats.maxHealth) return;
 
             ExecuteUsePotion();
@@ -581,21 +562,13 @@ public class PlayerControl : MonoBehaviour
 
     private void ExecuteUsePotion()
     {
-        currentPotionCharges--;
-
+        playerStats.currentPotions--;
         if (anim != null) anim.SetTrigger("Drink");
-
-        // Panggil efek di PlayerStats
         playerStats.ApplyPotionEffect(25f, 1f, 5f);
 
-        // Update Animator UI Potion
-        if (potionAnimator != null)
-        {
-            // Kirim integer sisa potion (3, 2, 1, atau 0) ke Animator
-            potionAnimator.SetInteger("Charges", currentPotionCharges);
-        }
+        RefreshPotionUI(playerStats.currentPotions);
 
-        Debug.Log($"<color=green>Potion digunakan! Sisa: {currentPotionCharges}</color>");
+        Debug.Log($"<color=green>Potion digunakan! Sisa: {playerStats.currentPotions}</color>");
     }
     private float GetDynamicStrikeRange(float baseRange)
     {
@@ -605,9 +578,17 @@ public class PlayerControl : MonoBehaviour
         Collider targetCol = target.GetComponent<Collider>();
         if (targetCol != null)
         {
-            // Mengambil setengah lebar bounds musuh
             bodyRadius = targetCol.bounds.extents.x + 0.2f;
         }
         return baseRange + bodyRadius;
+    }
+
+    public void RefreshPotionUI(int currentCharges)
+    {
+        if (potionFillImage != null && playerStats != null)
+        {
+            float fillPercentage = (float)currentCharges / playerStats.maxPotions;
+            potionFillImage.fillAmount = fillPercentage;
+        }
     }
 }
