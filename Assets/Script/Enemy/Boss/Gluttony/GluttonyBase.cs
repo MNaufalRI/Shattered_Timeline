@@ -38,19 +38,22 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     public PlayableDirector deathTimeline;
     public BossQuestManager questManager;
 
+    [Tooltip("Masukkan objek Dummy Boss yang ada di tengah arena ke sini")]
+    public GameObject dummyCutsceneBoss;
+
 
 
     private void Awake()
     {
         initialPosition = transform.position;
         initialRotation = transform.rotation;
+        currentHealth = maxHealth;
     }
 
     private void Start()
     {
         enemyBase = GetComponent<EnemyBase>();
         combatScript = GetComponent<DragonBoarCombat>();
-        currentHealth = maxHealth;
 
         anim = GetComponent<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
@@ -96,28 +99,31 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     private IEnumerator EnterPhase2Routine()
     {
         isPhase2 = true;
-        isImmune = true; 
+        isImmune = true;
 
         if (phase2Camera != null) phase2Camera.SetActive(true);
 
         if (playerMovement != null) playerMovement.enabled = false;
         if (playerCombat != null) playerCombat.enabled = false;
-        if (playerStats != null) playerStats.isInvincible = true; 
+        if (playerStats != null) playerStats.isInvincible = true;
 
         if (combatScript != null)
         {
             combatScript.StopAllCoroutines();
             combatScript.isAttacking = true;
             combatScript.timeSinceLastAttack = 0;
-            anim.ResetTrigger("BasicAttack");
-            anim.ResetTrigger("HeavyAttack");
-            anim.ResetTrigger("Gluttony");
-            anim.ResetTrigger("Hit");
-        }
 
-        if (combatScript.activeVFX != null)
-        {
-            Destroy(combatScript.activeVFX);
+            if (anim != null)
+            {
+                anim.ResetTrigger("BasicAttack");
+                anim.ResetTrigger("HeavyAttack");
+                anim.ResetTrigger("Gluttony");
+                anim.ResetTrigger("Hit");
+            }
+            if (combatScript.activeVFX != null)
+            {
+                Destroy(combatScript.activeVFX);
+            }
         }
 
         if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
@@ -136,11 +142,19 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         if (normalVisuals != null) normalVisuals.SetActive(false);
         if (goldVisuals != null) goldVisuals.SetActive(true);
 
- 
+
         yield return new WaitForSeconds(phase2TransitionTime);
 
-  
-        ApplyPhase2Buffs();
+
+        try
+        {
+            ApplyPhase2Buffs();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("<color=orange>Ada error di ApplyPhase2Buffs, tapi Cutscene dipaksa lanjut!</color> " + e);
+        }
+
 
         if (phase2Camera != null) phase2Camera.SetActive(false);
 
@@ -162,7 +176,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
 
     private void ApplyPhase2Buffs()
     {
-        // Buff Speed Permanen +30%
         if (navMeshAgent != null)
         {
             navMeshAgent.speed *= 1.3f;
@@ -178,18 +191,12 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     {
         if (isDead) return;
         isDead = true;
-        isImmune = true; 
+        isImmune = true;
 
         if (combatScript != null)
         {
             combatScript.StopAllCoroutines();
             combatScript.enabled = false;
-        }
-
-        if (anim != null)
-        {
-            anim.ResetTrigger("Hit");
-            anim.SetTrigger("Die");
         }
 
         if (navMeshAgent != null)
@@ -203,23 +210,21 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             questManager.BossDefeated();
         }
 
-        Debug.Log("<color=red>DragonBoar telah dikalahkan!</color>");
-    }
 
-    public void PlayDeathCutscene()
-    {
-        if (navMeshAgent != null)
+        gameObject.SetActive(false);
+
+        if (dummyCutsceneBoss != null)
         {
-            navMeshAgent.enabled = false;
+            dummyCutsceneBoss.SetActive(true);
         }
-
-        transform.position = initialPosition;
-        transform.rotation = initialRotation;
+        else
+        {
+            Debug.LogWarning("Dummy Boss belum dimasukkan ke Inspector!");
+        }
 
         if (deathTimeline != null)
         {
             deathTimeline.Play();
-            Debug.Log("<color=cyan>Death Cutscene Started at Spawn Position!</color>");
         }
     }
 
