@@ -7,6 +7,13 @@ public class GameSettings : MonoBehaviour
     {
         Debug.unityLogger.logEnabled = Application.isEditor;
     }
+
+    void Start()
+    {
+        LoadInventoryData();
+        Debug.Log("Inventory otomatis dimuat di scene baru.");
+    }
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.F1))

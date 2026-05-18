@@ -85,4 +85,13 @@ public class DamageDealer : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(transform.position, transform.position - transform.up * weaponLength);
     }
+
+    public void ApplyUpgradedWeaponStats(GameObject newVFX)
+    {
+        if (newVFX != null)
+        {
+            hitVFXPrefab = newVFX;
+            Debug.Log("Hit VFX Senjata telah diubah (misal: efek Es)!");
+        }
+    }
 }

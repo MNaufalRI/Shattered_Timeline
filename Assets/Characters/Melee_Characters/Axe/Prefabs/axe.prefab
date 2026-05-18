@@ -9927,9 +9927,6 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
-  slashPrefab: {fileID: 0}
-  slashSpawnPoint: {fileID: 0}
-  followWeapon: 1
   hitVFXPrefab: {fileID: 0}
   hitVFXDestroyTime: 1
   weaponTrail: {fileID: 0}
