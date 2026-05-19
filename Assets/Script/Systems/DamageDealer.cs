@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class DamageDealer : MonoBehaviour
 {
+    [Header("Weapon Stats")]
+    public float weaponDamage = 15f; // <--- TAMBAHAN BARU: Damage bawaan senjata ini
+
     bool canDealDamage;
     List<GameObject> hasDealtDamage = new List<GameObject>();
 
@@ -43,7 +46,7 @@ public class DamageDealer : MonoBehaviour
                         damageable.TakeDamage(currentDamage);
                         SpawnHitVFX(hit.point, hit.normal);
                         hasDealtDamage.Add(targetObj);
-                        Debug.Log($"<color=cyan>Hit: {targetObj.name}</color>");
+                        Debug.Log($"<color=cyan>Hit: {targetObj.name} | Damage: {currentDamage}</color>");
                     }
                 }
             }
@@ -59,7 +62,6 @@ public class DamageDealer : MonoBehaviour
         }
     }
 
-    // Fungsi ini dipanggil untuk menyalakan mode serang pedang
     public void StartDealDamage(float finalDamage)
     {
         canDealDamage = true;
@@ -73,7 +75,6 @@ public class DamageDealer : MonoBehaviour
         }
     }
 
-    // Fungsi ini dipanggil untuk mematikan mode serang
     public void EndDealDamage()
     {
         canDealDamage = false;

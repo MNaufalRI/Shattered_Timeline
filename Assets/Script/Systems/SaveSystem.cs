@@ -6,10 +6,23 @@ public static class SaveSystem
 {
     private static string path = Application.persistentDataPath + "/inventory_save.json";
 
-    public static void SaveInventory(List<ItemData> items)
+    // PERBAIKAN: Mengubah List<ItemData> menjadi List<InventorySlot>
+    public static void SaveInventory(List<InventorySlot> slots)
     {
         InventoryData data = new InventoryData();
-        foreach (var item in items) data.itemNames.Add(item.name);
+
+        // Loop untuk membongkar setiap slot di dalam inventory
+        foreach (var slot in slots)
+        {
+            if (slot.item != null)
+            {
+                // Masukkan nama item sebanyak jumlah (amount) yang ditumpuk di slot tersebut
+                for (int i = 0; i < slot.amount; i++)
+                {
+                    data.itemNames.Add(slot.item.name);
+                }
+            }
+        }
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(path, json);

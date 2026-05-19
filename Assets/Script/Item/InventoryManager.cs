@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement; // TAMBAHAN: Untuk mendeteksi pindah scene
+using UnityEngine.SceneManagement;
+
 
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance;
-    public List<ItemData> Items = new List<ItemData>();
+
+    // UBAH: Sekarang menggunakan List of InventorySlot, bukan ItemData
+    public List<InventorySlot> Slots = new List<InventorySlot>();
 
     [Header("UI References")]
     public Transform ItemContent;
@@ -13,13 +16,10 @@ public class InventoryManager : MonoBehaviour
 
     void Awake()
     {
-        // Singleton & Persistence
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            // Daftarkan fungsi OnSceneLoaded ke event manager Unity
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
@@ -30,11 +30,9 @@ public class InventoryManager : MonoBehaviour
 
     void OnDestroy()
     {
-        // Bagus untuk mencegah memory leak saat game dimatikan
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    // Fungsi ini OTOMATIS berjalan setiap kali game berhasil memuat scene baru
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         FindUIReferencesInNewScene();
@@ -43,40 +41,68 @@ public class InventoryManager : MonoBehaviour
 
     private void FindUIReferencesInNewScene()
     {
-        // Cari ItemContent baru hanya SEKALI saja saat pindah scene
         GameObject contentObj = GameObject.Find("ItemContent");
-        if (contentObj != null)
-        {
-            ItemContent = contentObj.transform;
-        }
-        else
-        {
-            // Set ke null jika scene baru tidak punya UI inventory (misal: di Main Menu atau Loading Stage)
-            ItemContent = null;
-        }
+        ItemContent = contentObj != null ? contentObj.transform : null;
     }
 
-    public void Add(ItemData item) { Items.Add(item); RefreshUI(); }
-    public void Remove(ItemData item) { Items.Remove(item); RefreshUI(); }
+    // UBAH: Fungsi Add sekarang menerima jumlah (amount) dan mengecek tumpukan
+    public void Add(ItemData itemToAdd, int amountToAdd = 1)
+    {
+        if (itemToAdd == null) return;
+
+        foreach (var slot in Slots)
+        {
+            // PERBAIKAN: Gunakan .name
+            if (slot.item != null && slot.item.name == itemToAdd.name)
+            {
+                slot.amount += amountToAdd;
+                RefreshUI();
+                return;
+            }
+        }
+
+        Slots.Add(new InventorySlot(itemToAdd, amountToAdd));
+        RefreshUI();
+    }
+
+    public void Remove(ItemData itemToRemove, int amountToRemove = 1)
+    {
+        if (itemToRemove == null) return;
+
+        for (int i = Slots.Count - 1; i >= 0; i--)
+        {
+            // PERBAIKAN: Gunakan .name
+            if (Slots[i].item != null && Slots[i].item.name == itemToRemove.name)
+            {
+                Slots[i].amount -= amountToRemove;
+
+                if (Slots[i].amount <= 0)
+                {
+                    Slots.RemoveAt(i);
+                }
+                break;
+            }
+        }
+        RefreshUI();
+    }
 
     public void RefreshUI()
     {
-        // Jika di scene saat ini tidak ada UI Inventory, langsung abaikan agar tidak error
         if (ItemContent == null || InventoryItem == null) return;
 
-        // Bersihkan UI lama dengan aman (Lepas parent dulu agar tidak duplikat di frame yang sama)
         for (int i = ItemContent.childCount - 1; i >= 0; i--)
         {
             Transform child = ItemContent.GetChild(i);
-            child.SetParent(null); // Putus hubungan instan
-            Destroy(child.gameObject); // Hancurkan di akhir frame
+            child.SetParent(null);
+            Destroy(child.gameObject);
         }
 
-        // Spawn ulang slot UI berdasarkan item terbaru
-        foreach (var item in Items)
+        foreach (var slot in Slots)
         {
             GameObject obj = Instantiate(InventoryItem, ItemContent);
-            obj.GetComponent<InventoryItemUI>()?.Setup(item);
+
+            // UBAH: Kirim 'slot' secara utuh, BUKAN 'slot.item'
+            obj.GetComponent<InventoryItemUI>()?.Setup(slot);
         }
     }
 }

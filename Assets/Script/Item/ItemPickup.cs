@@ -51,7 +51,7 @@ public class ItemPickup : MonoBehaviour
             return;
         }
 
-        InventoryManager.Instance.Add(itemData);
+        InventoryManager.Instance.Add(itemData, amount);
 
         Debug.Log("Auto pickup: " + itemData.itemName);
 

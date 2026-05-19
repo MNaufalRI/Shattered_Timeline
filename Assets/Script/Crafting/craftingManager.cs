@@ -34,7 +34,11 @@ public class CraftingManager : MonoBehaviour
 
         int currentMat1 = CountItem(currentRecipe.material1);
         int currentMat2 = CountItem(currentRecipe.material2);
-        bool hasBaseWeapon = CountItem(currentRecipe.baseWeapon) > 0;
+        bool hasBaseWeapon = false;
+        if (PlayerWeaponManager.Instance != null)
+        {
+            hasBaseWeapon = PlayerWeaponManager.Instance.IsHoldingWeapon(currentRecipe.baseWeapon);
+        }
         bool hasUpgradedWeapon = CountItem(currentRecipe.upgradedWeapon) > 0;
         string mat1Color = currentMat1 >= currentRecipe.material1Amount ? "green" : "red";
         string mat2Color = currentMat2 >= currentRecipe.material2Amount ? "green" : "red";
@@ -80,7 +84,11 @@ public class CraftingManager : MonoBehaviour
         // Pengecekan ulang ganda demi keamanan
         int currentMat1 = CountItem(currentRecipe.material1);
         int currentMat2 = CountItem(currentRecipe.material2);
-        bool hasBaseWeapon = CountItem(currentRecipe.baseWeapon) > 0;
+        bool hasBaseWeapon = false;
+        if (PlayerWeaponManager.Instance != null)
+        {
+            hasBaseWeapon = PlayerWeaponManager.Instance.IsHoldingWeapon(currentRecipe.baseWeapon);
+        }
 
         if (hasBaseWeapon && currentMat1 >= currentRecipe.material1Amount && currentMat2 >= currentRecipe.material2Amount)
         {
@@ -90,49 +98,61 @@ public class CraftingManager : MonoBehaviour
 
     private void ExecuteUpgrade()
     {
-        // Hapus material dan senjata dasar
-        RemoveItemFromInventory(currentRecipe.baseWeapon, 1);
+        // 1. Hapus material dan senjata dasar dari inventory
         RemoveItemFromInventory(currentRecipe.material1, currentRecipe.material1Amount);
         RemoveItemFromInventory(currentRecipe.material2, currentRecipe.material2Amount);
 
-        // Tambahkan senjata baru
+        // 2. Tambahkan senjata baru ke inventory
         InventoryManager.Instance.Add(currentRecipe.upgradedWeapon);
 
-        // Terapkan ke DamageDealer (VFX)
+        // 3. Terapkan efek damage baru ke musuh
         if (playerWeaponDamageDealer != null)
         {
             playerWeaponDamageDealer.ApplyUpgradedWeaponStats(currentRecipe.newHitVFX);
         }
 
-        // Refresh Inventory dan UI Crafting
+        // 4. ---> TAMBAHAN BARU: Ganti visual senjata di tangan karakter! <---
+        if (PlayerWeaponManager.Instance != null)
+        {
+            PlayerWeaponManager.Instance.EquipUpgradedWeapon();
+        }
+
+        // 5. Refresh UI Anvil agar berubah jadi "Max Level"
         InventoryManager.Instance.RefreshUI();
-        UpdateCraftingUI(); // Panggil lagi agar siluet berubah menjadi warna asli
+        UpdateCraftingUI();
 
         Debug.Log("<color=cyan>Upgrade Berhasil! Senjata baru telah terbuka.</color>");
     }
 
     // --- Fungsi Bantuan ---
+    // --- Fungsi Bantuan ---
     private int CountItem(ItemData itemToFind)
     {
-        int count = 0;
-        foreach (var item in InventoryManager.Instance.Items)
+        if (itemToFind == null) return 0;
+
+        int totalCount = 0;
+        Debug.Log($"[CRAFTING] Mencari material bernama: '{itemToFind.name}'");
+
+        foreach (var slot in InventoryManager.Instance.Slots)
         {
-            if (item == itemToFind) count++;
+            if (slot.item != null)
+            {
+                Debug.Log($"[CRAFTING] Di tas ada item bernama: '{slot.item.name}' dengan jumlah {slot.amount}");
+
+                if (slot.item.name == itemToFind.name)
+                {
+                    totalCount += slot.amount;
+                }
+            }
         }
-        return count;
+
+        Debug.Log($"[CRAFTING] Total ditemukan untuk '{itemToFind.name}': {totalCount}");
+        return totalCount;
     }
 
     private void RemoveItemFromInventory(ItemData itemToRemove, int amountToRemove)
     {
-        int removedCount = 0;
-        for (int i = InventoryManager.Instance.Items.Count - 1; i >= 0; i--)
-        {
-            if (InventoryManager.Instance.Items[i] == itemToRemove)
-            {
-                InventoryManager.Instance.Items.RemoveAt(i);
-                removedCount++;
-                if (removedCount >= amountToRemove) break;
-            }
-        }
+        // Langsung panggil fungsi Remove dari InventoryManager yang sudah kita perbarui
+        InventoryManager.Instance.Remove(itemToRemove, amountToRemove);
     }
 }

@@ -18,13 +18,26 @@ public class AnvilInteract : MonoBehaviour
 
     private void ToggleCraftingUI()
     {
-        bool isActive = craftingUIPanel.activeSelf;
-        craftingUIPanel.SetActive(!isActive);
+        // 1. Balikkan kondisi aktif panel UI (buka/tutup)
+        bool akanTerbuka = !craftingUIPanel.activeSelf;
+        craftingUIPanel.SetActive(akanTerbuka);
 
-        // Opsional: Pause waktu atau lock kursor saat UI terbuka
-        Time.timeScale = isActive ? 1f : 0f;
-        Cursor.lockState = isActive ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !isActive;
+        // 2. JIKA PANELNYA TERBUKA, PAKSA REFRESH ANGKA!
+        if (akanTerbuka)
+        {
+            // Cari komponen CraftingManager di panel tersebut, lalu panggil fungsinya
+            CraftingManager craftingScript = craftingUIPanel.GetComponent<CraftingManager>();
+
+            if (craftingScript != null)
+            {
+                craftingScript.UpdateCraftingUI();
+                Debug.Log("<color=lime>[ANVIL]</color> Sukses memicu hitung ulang material saat menu dibuka!");
+            }
+            else
+            {
+                Debug.LogError("[ANVIL] Waduh, script CraftingManager tidak ditemukan di object " + craftingUIPanel.name);
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -33,7 +46,6 @@ public class AnvilInteract : MonoBehaviour
         {
             isPlayerNear = true;
             Debug.Log("Tekan 'F' untuk membuka Anvil.");
-            // Kamu bisa memunculkan UI tulisan "Press F to Craft" di sini
         }
     }
 
@@ -42,8 +54,9 @@ public class AnvilInteract : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNear = false;
-            craftingUIPanel.SetActive(false); // Tutup otomatis jika player menjauh
-            Time.timeScale = 1f;
+
+            // Tutup otomatis jika player menjauh
+            craftingUIPanel.SetActive(false);
         }
     }
 }

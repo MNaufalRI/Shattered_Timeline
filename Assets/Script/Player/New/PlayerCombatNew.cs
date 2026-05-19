@@ -404,13 +404,30 @@ public class PlayerControl : MonoBehaviour
 
     public void EnableWeaponHitbox()
     {
-        if (weaponDamageDealer != null && playerStats != null)
+        // 1. Cek apakah komponen weaponDamageDealer-nya ada atau NULL
+        if (weaponDamageDealer == null)
         {
-            float finalDamage = playerStats.attackDamage * currentMultiplier;
+            Debug.LogError("<color=red>[HITBOX ERROR]</color> PlayerControl TIDAK BISA NGEDAMAGE karena variabel weaponDamageDealer bernilai NULL / Kosong!");
+            return;
+        }
+
+        // 2. Cek apakah GameObject tempat DamageDealer itu menempel sedang AKTIF atau MATI
+        if (!weaponDamageDealer.gameObject.activeInHierarchy)
+        {
+            Debug.LogError($"<color=red>[HITBOX ERROR]</color> PlayerControl mendeteksi DamageDealer ada di object '{weaponDamageDealer.gameObject.name}', TAPI OBJECT-NYA SEDANG MATI (Deactivated)!");
+            return;
+        }
+
+        if (playerStats != null)
+        {
+            float finalDamage = (playerStats.attackDamage + weaponDamageDealer.weaponDamage) * currentMultiplier;
+
+            // 3. Log untuk memastikan angka dan target pengiriman sudah benar
+            Debug.Log($"<color=lime>[HITBOX SUCCESS]</color> Mengirim damage sebesar {finalDamage} ke script DamageDealer milik: '{weaponDamageDealer.gameObject.name}'");
+
             weaponDamageDealer.StartDealDamage(finalDamage);
         }
     }
-
     public void DisableWeaponHitbox()
     {
         if (weaponDamageDealer != null)
@@ -590,5 +607,11 @@ public class PlayerControl : MonoBehaviour
             float fillPercentage = (float)currentCharges / playerStats.maxPotions;
             potionFillImage.fillAmount = fillPercentage;
         }
+    }
+
+    public void UpdateWeaponDamageDealer(DamageDealer newWeaponDealer)
+    {
+        weaponDamageDealer = newWeaponDealer;
+        Debug.Log("<color=yellow>PlayerControl:</color> Damage Dealer berhasil diganti ke senjata baru!");
     }
 }

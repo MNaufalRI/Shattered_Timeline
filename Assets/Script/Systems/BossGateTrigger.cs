@@ -40,7 +40,8 @@ public class BossGateTrigger : MonoBehaviour
         // --- TAMBAHAN KODE: Simpan inventory sebelum pindah scene ---
         if (InventoryManager.Instance != null)
         {
-            SaveSystem.SaveInventory(InventoryManager.Instance.Items);
+            // UBAH: Menggunakan .Slots bukan .Items
+            SaveSystem.SaveInventory(InventoryManager.Instance.Slots);
             Debug.Log("Inventory berhasil disimpan sebelum pindah ke boss stage.");
         }
         else
