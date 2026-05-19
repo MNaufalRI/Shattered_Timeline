@@ -226,6 +226,8 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         {
             deathTimeline.Play();
         }
+        ExpReward reward = GetComponent<ExpReward>();
+        if (reward != null) reward.GiveExp();
     }
 
     public void ResetBossState()

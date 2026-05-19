@@ -225,6 +225,8 @@ public class EnemySimple : MonoBehaviour, IDamageable
         }
 
         DropLoot();
+        ExpReward reward = GetComponent<ExpReward>();
+        if (reward != null) reward.GiveExp();
 
         OnEnemyKilled?.Invoke();
 

@@ -352,4 +352,18 @@ public class PlayerStats : MonoBehaviour
             trigger.ResetTrigger();
         }
     }
+    public void ApplyLevelUpBonus(float hpBonus, float manaBonus, float dmgBonus)
+    {
+        _maxHealth += hpBonus;
+        _currentHealth = _maxHealth;
+        _maxMana += manaBonus;
+        _currentMana = _maxMana;
+        _baseDamage += dmgBonus;
+
+        if (healthBar != null) healthBar.SetMaxValue(_maxHealth);
+        if (manaBar != null) manaBar.SetMaxValue(_maxMana);
+
+        UpdateUI();
+    }
 }
+
