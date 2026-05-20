@@ -30,16 +30,16 @@ public class PlayerControl : MonoBehaviour
     private bool isSprinting => _inputs != null && _inputs.sprint;
 
     [Header("Skill Settings")]
-    public float skill1ManaCost = 5f; 
+    public float skill1ManaCost = 5f;
     public float skill2ManaCost = 10f;
     public float skill1Cooldown = 5f;
-    public float skill2Cooldown = 10f; 
-    public float skill1Range = 3f; 
-    public float skill2Range = 5f; 
+    public float skill2Cooldown = 10f;
+    public float skill1Range = 3f;
+    public float skill2Range = 5f;
 
     [Header("Radius Visualizer")]
     public LineRenderer radiusVisualizer;
-    public int circleSegments = 50; 
+    public int circleSegments = 50;
 
     [Header("Dash Settings")]
     [SerializeField] private TrailRenderer trailRenderer;
@@ -61,9 +61,9 @@ public class PlayerControl : MonoBehaviour
     [Header("Weapon & Damage Scaling")]
     public DamageDealer weaponDamageDealer;
 
-    [Range(0f, 3f)] public float quickAttackMultiplier = 1.0f; 
-    [Range(0f, 3f)] public float skill1Multiplier = 1.8f;     
-    [Range(0f, 3f)] public float skill2Multiplier = 1.2f;    
+    [Range(0f, 3f)] public float quickAttackMultiplier = 1.0f;
+    [Range(0f, 3f)] public float skill1Multiplier = 1.8f;
+    [Range(0f, 3f)] public float skill2Multiplier = 1.2f;
 
     private float currentMultiplier = 1.0f;
 
@@ -72,6 +72,19 @@ public class PlayerControl : MonoBehaviour
 
     [Header("Potion System")]
     public Image potionFillImage;
+
+    [Header("Skill 3 Settings (Upgrade Only)")]
+    public float skill3ManaCost = 15f;
+    public float skill3Cooldown = 8f;
+    public float skill3Range = 7f;
+    private float skill3Timer = 0f;
+
+    [Header("Spawn Locations")]
+    [Tooltip("Tarik objek kosong yang ada di depan Player ke sini")]
+    public Transform slashSpawnPoint;
+
+    [Header("VFX Prefabs")]
+    public GameObject slashProjectilePrefab;
 
     void Awake()
     {
@@ -91,14 +104,13 @@ public class PlayerControl : MonoBehaviour
                 isApproaching = false;
                 HideRadius();
             }
-            return; 
+            return;
         }
-
 
         if (skill1Timer > 0) skill1Timer -= Time.deltaTime;
         if (skill2Timer > 0) skill2Timer -= Time.deltaTime;
+        if (skill3Timer > 0) skill3Timer -= Time.deltaTime;
     }
-
 
     public void OnMove(InputValue value)
     {
@@ -135,11 +147,31 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    public void OnSkill3(InputValue value)
+    {
+        if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
+        {
+            if (PlayerWeaponManager.Instance != null && !PlayerWeaponManager.Instance.IsWeaponMaxLevel())
+            {
+                Debug.Log("<color=orange>Skill 3 masih terkunci. Upgrade Senjata dulu!</color>");
+                return;
+            }
 
+            if (skill3Timer <= 0 && playerStats.currentMana >= skill3ManaCost)
+            {
+                Attack(3);
+            }
+            else
+            {
+                if (skill3Timer > 0) Debug.Log("Skill 3 Cooldown");
+                else Debug.Log("Mana tidak cukup");
+            }
+        }
+    }
 
     public void Attack(int attackState)
     {
-        if (isApproaching && (attackState == 1 || attackState == 2))
+        if (isApproaching && (attackState == 1 || attackState == 2 || attackState == 3))
         {
             CancelApproach();
         }
@@ -148,6 +180,7 @@ public class PlayerControl : MonoBehaviour
 
         if (attackState == 1 && playerStats.currentMana < skill1ManaCost) return;
         if (attackState == 2 && playerStats.currentMana < skill2ManaCost) return;
+        if (attackState == 3 && playerStats.currentMana < skill3ManaCost) return;
 
         if (thirdPersonController != null)
         {
@@ -160,12 +193,60 @@ public class PlayerControl : MonoBehaviour
 
     void ExecuteAttackAnim(int attackState)
     {
-        if (attackState == 0)
-            QuickAttack();
-        else if (attackState == 1)
-            Skill1();
-        else if (attackState == 2)
-            Skill2();
+        if (attackState == 0) QuickAttack();
+        else if (attackState == 1) Skill1();
+        else if (attackState == 2) Skill2();
+        else if (attackState == 3) Skill3();
+    }
+
+    void Skill3()
+    {
+        if (target == null)
+        {
+            ResetAttack();
+            return;
+        }
+
+        float distance = Vector3.Distance(transform.position, target.position);
+
+        if (distance > skill3Range)
+        {
+            if (approachCoroutine != null) StopCoroutine(approachCoroutine);
+            approachCoroutine = StartCoroutine(ApproachAndCastSkill(target, 3, skill3Range));
+        }
+        else
+        {
+            ExecuteSkill3();
+        }
+    }
+
+    void ExecuteSkill3()
+    {
+        if (playerStats != null && playerStats.UseMana(skill3ManaCost))
+        {
+            skill3Timer = skill3Cooldown;
+            currentMultiplier = 2.5f;
+
+            if (target != null) FaceThis(target.position);
+
+            anim.SetBool("heavyAttack3", true);
+            isAttacking = true;
+            playerStats.isInvincible = true;
+        }
+        else { ResetAttack(); }
+    }
+
+    public void SpawnSlashProjectileEvent()
+    {
+        if (slashProjectilePrefab != null && slashSpawnPoint != null)
+        {
+            Instantiate(slashProjectilePrefab, slashSpawnPoint.position, slashSpawnPoint.rotation);
+            Debug.Log("<color=lime>[SKILL 3]</color> Projectile Slash diluncurkan via Animation Event!");
+        }
+        else
+        {
+            Debug.LogError("Gagal spawn Skill 3: Prefab atau SpawnPoint belum ditarik di Inspector PlayerControl!");
+        }
     }
 
     void QuickAttack()
@@ -230,7 +311,7 @@ public class PlayerControl : MonoBehaviour
     {
         isApproaching = false;
         anim.SetFloat("Speed", 0f);
-        HideRadius(); 
+        HideRadius();
         if (approachCoroutine != null) StopCoroutine(approachCoroutine);
         ResetAttack();
     }
@@ -238,7 +319,7 @@ public class PlayerControl : MonoBehaviour
     void ExecuteQuickAttackAnim(int attackIndex)
     {
         isAttacking = true;
-        currentMultiplier = quickAttackMultiplier; 
+        currentMultiplier = quickAttackMultiplier;
         switch (attackIndex)
         {
             case 1: MoveTowardsTarget(target.position, quickAttackDeltaDistance, "punch"); break;
@@ -260,7 +341,7 @@ public class PlayerControl : MonoBehaviour
         }
         else
         {
-            ExecuteSkill1(); 
+            ExecuteSkill1();
         }
     }
 
@@ -289,6 +370,11 @@ public class PlayerControl : MonoBehaviour
     public float Skill2Timer
     {
         get { return skill2Timer; }
+    }
+
+    public float Skill3Timer
+    {
+        get { return skill3Timer; }
     }
 
     void ExecuteSkill1()
@@ -349,6 +435,7 @@ public class PlayerControl : MonoBehaviour
         {
             if (skillIndex == 1) ExecuteSkill1();
             else if (skillIndex == 2) ExecuteSkill2();
+            else if (skillIndex == 3) ExecuteSkill3();
         }
         else ResetAttack();
     }
@@ -359,7 +446,7 @@ public class PlayerControl : MonoBehaviour
 
         radiusVisualizer.enabled = true;
         radiusVisualizer.positionCount = circleSegments + 1;
-        radiusVisualizer.useWorldSpace = false; 
+        radiusVisualizer.useWorldSpace = false;
 
         float angle = 0f;
         for (int i = 0; i < circleSegments + 1; i++)
@@ -386,6 +473,7 @@ public class PlayerControl : MonoBehaviour
         anim.SetBool("mmakick", false);
         anim.SetBool("heavyAttack1", false);
         anim.SetBool("heavyAttack2", false);
+        anim.SetBool("heavyAttack3", false);
 
         if (playerStats != null) playerStats.isInvincible = false;
 
@@ -404,14 +492,12 @@ public class PlayerControl : MonoBehaviour
 
     public void EnableWeaponHitbox()
     {
-        // 1. Cek apakah komponen weaponDamageDealer-nya ada atau NULL
         if (weaponDamageDealer == null)
         {
             Debug.LogError("<color=red>[HITBOX ERROR]</color> PlayerControl TIDAK BISA NGEDAMAGE karena variabel weaponDamageDealer bernilai NULL / Kosong!");
             return;
         }
 
-        // 2. Cek apakah GameObject tempat DamageDealer itu menempel sedang AKTIF atau MATI
         if (!weaponDamageDealer.gameObject.activeInHierarchy)
         {
             Debug.LogError($"<color=red>[HITBOX ERROR]</color> PlayerControl mendeteksi DamageDealer ada di object '{weaponDamageDealer.gameObject.name}', TAPI OBJECT-NYA SEDANG MATI (Deactivated)!");
@@ -422,12 +508,12 @@ public class PlayerControl : MonoBehaviour
         {
             float finalDamage = (playerStats.attackDamage + weaponDamageDealer.weaponDamage) * currentMultiplier;
 
-            // 3. Log untuk memastikan angka dan target pengiriman sudah benar
             Debug.Log($"<color=lime>[HITBOX SUCCESS]</color> Mengirim damage sebesar {finalDamage} ke script DamageDealer milik: '{weaponDamageDealer.gameObject.name}'");
 
             weaponDamageDealer.StartDealDamage(finalDamage);
         }
     }
+
     public void DisableWeaponHitbox()
     {
         if (weaponDamageDealer != null)
@@ -587,6 +673,7 @@ public class PlayerControl : MonoBehaviour
 
         Debug.Log($"<color=green>Potion digunakan! Sisa: {playerStats.currentPotions}</color>");
     }
+
     private float GetDynamicStrikeRange(float baseRange)
     {
         if (target == null) return baseRange;

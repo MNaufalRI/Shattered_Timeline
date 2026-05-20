@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 333322a150a06ed4187debc3b903e416, type: 3}
   m_Name: Ice_Axe
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: 
+  itemName: Ice Axe
   icon: {fileID: 0}
   itemType: 2
   isStackable: 0

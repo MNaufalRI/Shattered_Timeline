@@ -14,6 +14,7 @@ public class PlayerWeaponManager : MonoBehaviour
     [Tooltip("Tarik file ItemData Kapak Es dari folder Resources ke sini")]
     public ItemData iceAxeData;
 
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -67,5 +68,15 @@ public class PlayerWeaponManager : MonoBehaviour
                 if (newIceAxeDealer == null) Debug.LogError("Gagal menemukan DamageDealer di dalam child Ice Axe! Periksa kembali apakah scriptnya sudah terpasang.");
             }
         }
+    }
+
+    public bool IsWeaponMaxLevel()
+    {
+        // Cek apakah model 3D Kapak Es sedang aktif di tangan
+        if (iceAxe3DModel != null)
+        {
+            return iceAxe3DModel.activeSelf;
+        }
+        return false;
     }
 }

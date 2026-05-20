@@ -5,7 +5,7 @@ using TMPro;
 public class AbilitySlotUI : MonoBehaviour
 {
     [Header("Settings")]
-    public int skillIndex; // 1 untuk Skill 1, 2 untuk Skill 2
+    public int skillIndex;
     public Color lowManaColor = new Color(1, 0, 0, 0.5f);
     public Color normalColor = Color.white;
 
@@ -19,7 +19,6 @@ public class AbilitySlotUI : MonoBehaviour
 
     void Start()
     {
-        // Mencari referensi di player
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
@@ -32,21 +31,59 @@ public class AbilitySlotUI : MonoBehaviour
     {
         if (playerControl == null || playerStats == null) return;
 
+        // Khusus Skill 3: Cek apakah sudah di-unlock
+        if (skillIndex == 3)
+        {
+            bool isUnlocked = false;
+            if (PlayerWeaponManager.Instance != null)
+            {
+                isUnlocked = PlayerWeaponManager.Instance.IsWeaponMaxLevel();
+            }
+
+            iconImage.enabled = isUnlocked;
+
+            // Jika belum di-unlock, matikan semua elemen cooldown dan berhenti di sini
+            if (!isUnlocked)
+            {
+                cooldownOverlay.enabled = false;
+                cooldownText.enabled = false;
+                return;
+            }
+        }
+
+        // Hanya jalankan pembaruan jika senjata sudah di-unlock (atau jika skill 1 & 2)
         UpdateCooldownUI();
         UpdateManaAvailability();
     }
 
     void UpdateCooldownUI()
     {
-        float currentTimer = (skillIndex == 1) ? playerControl.Skill1Timer : playerControl.Skill2Timer;
-        float maxCooldown = (skillIndex == 1) ? playerControl.skill1Cooldown : playerControl.skill2Cooldown;
+        float currentTimer = 0f;
+        float maxCooldown = 1f;
 
+        // Ambil data SESUAI dengan index masing-masing
+        switch (skillIndex)
+        {
+            case 1:
+                currentTimer = playerControl.Skill1Timer;
+                maxCooldown = playerControl.skill1Cooldown;
+                break;
+            case 2:
+                currentTimer = playerControl.Skill2Timer;
+                maxCooldown = playerControl.skill2Cooldown;
+                break;
+            case 3:
+                currentTimer = playerControl.Skill3Timer;
+                maxCooldown = playerControl.skill3Cooldown;
+                break;
+        }
+
+        // Terapkan visual
         if (currentTimer > 0)
         {
             cooldownOverlay.enabled = true;
             cooldownText.enabled = true;
 
-            // Menghitung persentase fill (0 sampai 1)
             cooldownOverlay.fillAmount = currentTimer / maxCooldown;
             cooldownText.text = Mathf.Ceil(currentTimer).ToString();
         }
@@ -59,9 +96,15 @@ public class AbilitySlotUI : MonoBehaviour
 
     void UpdateManaAvailability()
     {
-        float manaCost = (skillIndex == 1) ? playerControl.skill1ManaCost : playerControl.skill2ManaCost;
+        float manaCost = 0f;
 
-        // Jika mana tidak cukup, icon sedikit menggelap/merah
+        switch (skillIndex)
+        {
+            case 1: manaCost = playerControl.skill1ManaCost; break;
+            case 2: manaCost = playerControl.skill2ManaCost; break;
+            case 3: manaCost = playerControl.skill3ManaCost; break;
+        }
+
         if (playerStats.currentMana < manaCost)
         {
             iconImage.color = lowManaColor;
