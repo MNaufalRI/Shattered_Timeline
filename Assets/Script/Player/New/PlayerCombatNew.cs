@@ -23,6 +23,12 @@ public class PlayerControl : MonoBehaviour
     [SerializeField] private float reachTime = 0.3f;
     [SerializeField] private LayerMask enemyLayer;
 
+    [Header("Auto Target Settings")]
+    [Tooltip("Radius pencarian musuh otomatis saat menyerang")]
+    public float autoTargetRadius = 10f;
+    [Tooltip("Sudut pandang ke depan untuk auto-target (derajat, misal 180 = seluruh depan)")]
+    public float autoTargetAngle = 180f;
+
     [Header("Auto Approach (Kejar Musuh)")]
     public float autoWalkSpeed = 5f;
     public float autoSprintSpeed = 8f;
@@ -112,6 +118,84 @@ public class PlayerControl : MonoBehaviour
         if (skill3Timer > 0) skill3Timer -= Time.deltaTime;
     }
 
+    // =========================================================
+    // AUTO TARGET: Cari musuh terdekat dalam radius & sudut pandang
+    // =========================================================
+    private void TryAutoTarget()
+    {
+        // Kalau sudah ada target aktif dan masih hidup/valid, tetap pakai
+        if (target != null)
+        {
+            // Cek apakah target masih valid (belum mati / masih aktif)
+            IDamageable damageable = target.GetComponent<IDamageable>();
+            // Jika objek masih aktif, pertahankan target
+            if (target.gameObject.activeInHierarchy)
+                return;
+            else
+                ClearTarget(); // target sudah mati, kosongkan
+        }
+
+        // Cari semua collider dalam radius
+        Collider[] hits = Physics.OverlapSphere(transform.position, autoTargetRadius, enemyLayer);
+
+        Transform closest = null;
+        float closestDot = -1f; // dot product terbesar = paling depan
+
+        foreach (var hit in hits)
+        {
+            if (!hit.gameObject.activeInHierarchy) continue;
+
+            Vector3 dirToEnemy = (hit.transform.position - transform.position).normalized;
+            dirToEnemy.y = 0;
+
+            Vector3 forward = transform.forward;
+            forward.y = 0;
+
+            float dot = Vector3.Dot(forward.normalized, dirToEnemy);
+
+            // Konversi sudut ke dot product threshold
+            float angleThreshold = Mathf.Cos(autoTargetAngle * 0.5f * Mathf.Deg2Rad);
+
+            if (dot >= angleThreshold && dot > closestDot)
+            {
+                closestDot = dot;
+                closest = hit.transform;
+            }
+        }
+
+        // Fallback: kalau tidak ada di depan, ambil yang paling dekat saja
+        if (closest == null && hits.Length > 0)
+        {
+            float minDist = float.MaxValue;
+            foreach (var hit in hits)
+            {
+                if (!hit.gameObject.activeInHierarchy) continue;
+                float dist = Vector3.Distance(transform.position, hit.transform.position);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closest = hit.transform;
+                }
+            }
+        }
+
+        if (closest != null)
+        {
+            ChangeTarget(closest);
+        }
+    }
+
+    private void ClearTarget()
+    {
+        if (target != null)
+        {
+            EnemyBase oldEnemy = target.GetComponent<EnemyBase>();
+            if (oldEnemy != null) oldEnemy.ActiveTarget(false);
+        }
+        target = null;
+    }
+    // =========================================================
+
     public void OnMove(InputValue value)
     {
         Vector2 moveInput = value.Get<Vector2>();
@@ -125,6 +209,7 @@ public class PlayerControl : MonoBehaviour
     {
         if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
+            TryAutoTarget(); // << Auto-target sebelum menyerang
             Attack(0);
         }
     }
@@ -133,6 +218,7 @@ public class PlayerControl : MonoBehaviour
     {
         if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
+            TryAutoTarget(); // << Auto-target sebelum skill
             if (skill1Timer <= 0) Attack(1);
             else Debug.Log("Skill 1 sedang Cooldown");
         }
@@ -142,6 +228,7 @@ public class PlayerControl : MonoBehaviour
     {
         if (value.isPressed && playerStats != null && !playerStats.IsDead() && !playerStats.isStunned)
         {
+            TryAutoTarget(); // << Auto-target sebelum skill
             if (skill2Timer <= 0) Attack(2);
             else Debug.Log("Skill 2 sedang Cooldown");
         }
@@ -157,6 +244,7 @@ public class PlayerControl : MonoBehaviour
                 return;
             }
 
+            TryAutoTarget(); // << Auto-target sebelum skill
             if (skill3Timer <= 0 && playerStats.currentMana >= skill3ManaCost)
             {
                 Attack(3);
@@ -280,7 +368,8 @@ public class PlayerControl : MonoBehaviour
 
         SetActiveRadius(range);
 
-        while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > range)
+        while (targetNode != null && targetNode.gameObject.activeInHierarchy &&
+               Vector3.Distance(transform.position, targetNode.position) > range)
         {
             if (!isApproaching)
             {
@@ -303,8 +392,10 @@ public class PlayerControl : MonoBehaviour
         isApproaching = false;
         anim.SetFloat("Speed", 0f);
 
-        if (targetNode != null) ExecuteQuickAttackAnim(attackIndex);
-        else ResetAttack();
+        if (targetNode != null && targetNode.gameObject.activeInHierarchy)
+            ExecuteQuickAttackAnim(attackIndex);
+        else
+            ResetAttack();
     }
 
     void CancelApproach()
@@ -362,20 +453,9 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
-    public float Skill1Timer
-    {
-        get { return skill1Timer; }
-    }
-
-    public float Skill2Timer
-    {
-        get { return skill2Timer; }
-    }
-
-    public float Skill3Timer
-    {
-        get { return skill3Timer; }
-    }
+    public float Skill1Timer => skill1Timer;
+    public float Skill2Timer => skill2Timer;
+    public float Skill3Timer => skill3Timer;
 
     void ExecuteSkill1()
     {
@@ -411,7 +491,8 @@ public class PlayerControl : MonoBehaviour
         isApproaching = true;
         SetActiveRadius(range);
 
-        while (targetNode != null && Vector3.Distance(transform.position, targetNode.position) > range)
+        while (targetNode != null && targetNode.gameObject.activeInHierarchy &&
+               Vector3.Distance(transform.position, targetNode.position) > range)
         {
             if (!isApproaching) { HideRadius(); yield break; }
 
@@ -431,7 +512,7 @@ public class PlayerControl : MonoBehaviour
         isApproaching = false;
         anim.SetFloat("Speed", 0f);
 
-        if (targetNode != null)
+        if (targetNode != null && targetNode.gameObject.activeInHierarchy)
         {
             if (skillIndex == 1) ExecuteSkill1();
             else if (skillIndex == 2) ExecuteSkill2();
@@ -461,9 +542,7 @@ public class PlayerControl : MonoBehaviour
     private void HideRadius()
     {
         if (radiusVisualizer != null)
-        {
             radiusVisualizer.enabled = false;
-        }
     }
 
     public void ResetAttack()
@@ -494,22 +573,19 @@ public class PlayerControl : MonoBehaviour
     {
         if (weaponDamageDealer == null)
         {
-            Debug.LogError("<color=red>[HITBOX ERROR]</color> PlayerControl TIDAK BISA NGEDAMAGE karena variabel weaponDamageDealer bernilai NULL / Kosong!");
+            Debug.LogError("<color=red>[HITBOX ERROR]</color> weaponDamageDealer NULL!");
             return;
         }
 
         if (!weaponDamageDealer.gameObject.activeInHierarchy)
         {
-            Debug.LogError($"<color=red>[HITBOX ERROR]</color> PlayerControl mendeteksi DamageDealer ada di object '{weaponDamageDealer.gameObject.name}', TAPI OBJECT-NYA SEDANG MATI (Deactivated)!");
+            Debug.LogError($"<color=red>[HITBOX ERROR]</color> DamageDealer object '{weaponDamageDealer.gameObject.name}' tidak aktif!");
             return;
         }
 
         if (playerStats != null)
         {
             float finalDamage = (playerStats.attackDamage + weaponDamageDealer.weaponDamage) * currentMultiplier;
-
-            Debug.Log($"<color=lime>[HITBOX SUCCESS]</color> Mengirim damage sebesar {finalDamage} ke script DamageDealer milik: '{weaponDamageDealer.gameObject.name}'");
-
             weaponDamageDealer.StartDealDamage(finalDamage);
         }
     }
@@ -517,9 +593,7 @@ public class PlayerControl : MonoBehaviour
     public void DisableWeaponHitbox()
     {
         if (weaponDamageDealer != null)
-        {
             weaponDamageDealer.EndDealDamage();
-        }
     }
 
     public void MoveTowardsTarget(Vector3 target_, float deltaDistance, string animName)
@@ -531,16 +605,12 @@ public class PlayerControl : MonoBehaviour
         Collider targetCol = target.GetComponent<Collider>();
 
         if (targetCol != null)
-        {
             dynamicRadius = targetCol.bounds.extents.x + 0.5f;
-        }
 
         float currentDistance = Vector3.Distance(transform.position, target_);
 
         if (currentDistance <= dynamicRadius)
-        {
             return;
-        }
 
         Vector3 directionToPlayer = (transform.position - target_).normalized;
         Vector3 outerEdgePos = target_ + (directionToPlayer * dynamicRadius);
@@ -574,7 +644,7 @@ public class PlayerControl : MonoBehaviour
             if (newEnemy != null)
             {
                 newEnemy.ActiveTarget(true);
-                Debug.Log("Target locked via Mouse: " + newEnemy.name);
+                Debug.Log("Auto-target locked: " + newEnemy.name);
             }
         }
     }
@@ -604,14 +674,10 @@ public class PlayerControl : MonoBehaviour
         if (value.isPressed && canDash && !playerStats.IsDead() && !playerStats.isStunned)
         {
             if (isApproaching)
-            {
                 CancelApproach();
-            }
 
             if (!isAttacking || isApproaching)
-            {
                 StartCoroutine(DashRoutine());
-            }
         }
     }
 
@@ -632,13 +698,9 @@ public class PlayerControl : MonoBehaviour
         while (Time.time < startTime + dashTime)
         {
             if (controller != null)
-            {
                 controller.Move(dashDir * dashForce * Time.deltaTime);
-            }
             else
-            {
                 transform.position += dashDir * dashForce * Time.deltaTime;
-            }
 
             yield return null;
         }
@@ -658,7 +720,6 @@ public class PlayerControl : MonoBehaviour
         if (value.isPressed && !playerStats.IsDead() && playerStats.currentPotions > 0)
         {
             if (playerStats.currentHealth >= playerStats.maxHealth) return;
-
             ExecuteUsePotion();
         }
     }
@@ -668,9 +729,7 @@ public class PlayerControl : MonoBehaviour
         playerStats.currentPotions--;
         if (anim != null) anim.SetTrigger("Drink");
         playerStats.ApplyPotionEffect(25f, 1f, 5f);
-
         RefreshPotionUI(playerStats.currentPotions);
-
         Debug.Log($"<color=green>Potion digunakan! Sisa: {playerStats.currentPotions}</color>");
     }
 
@@ -681,9 +740,8 @@ public class PlayerControl : MonoBehaviour
         float bodyRadius = enemyBodyRadius;
         Collider targetCol = target.GetComponent<Collider>();
         if (targetCol != null)
-        {
             bodyRadius = targetCol.bounds.extents.x + 0.2f;
-        }
+
         return baseRange + bodyRadius;
     }
 
