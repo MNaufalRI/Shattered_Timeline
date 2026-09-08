@@ -10,70 +10,146 @@ public class GameSettings : MonoBehaviour
 
     void Start()
     {
-        LoadInventoryData();
-        Debug.Log("Inventory otomatis dimuat di scene baru.");
+        if (PlayerPrefs.GetInt("LoadFromTransition", 0) == 1)
+        {
+            PlayerPrefs.SetInt("LoadFromTransition", 0);
+            PlayerPrefs.Save();
+            LoadAllData();
+        }
+        else
+        {
+            if (InventoryManager.Instance != null)
+            {
+                InventoryManager.Instance.Slots.Clear();
+                InventoryManager.Instance.RefreshUI();
+            }
+
+            if (PlayerWeaponManager.Instance != null)
+            {
+                PlayerWeaponManager.Instance.EquipBaseWeapon();
+            }
+        }
     }
 
     void Update()
     {
-        // Tombol F1 untuk Save Manual
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            SaveSystem.SaveInventory(InventoryManager.Instance.Slots);
+            SaveCurrentGame();
         }
 
-        // Tombol F2 untuk Load Manual
         if (Input.GetKeyDown(KeyCode.F2))
         {
-            LoadInventoryData();
+            LoadAllData();
         }
 
-        // --- TAMBAHAN BARU: Tombol F3 untuk Hapus Save Data (Reset) ---
         if (Input.GetKeyDown(KeyCode.F3))
         {
-            string path = Application.persistentDataPath + "/inventory_save.json";
-            if (System.IO.File.Exists(path))
+            SaveSystem.ResetSave();
+            PlayerPrefs.DeleteKey("SavedWeaponUpgraded");
+            PlayerPrefs.Save();
+
+            if (InventoryManager.Instance != null)
             {
-                System.IO.File.Delete(path);
+                InventoryManager.Instance.Slots.Clear();
+                InventoryManager.Instance.RefreshUI();
             }
-            InventoryManager.Instance.Slots.Clear();
-            InventoryManager.Instance.RefreshUI();
-            Debug.Log("<color=red>SAVE DATA DIHAPUS! Inventory kembali kosong.</color>");
+
+            PlayerLevel pLevel = FindObjectOfType<PlayerLevel>();
+            if (pLevel != null) pLevel.ResetToDefault();
+
+            PlayerStats pStats = FindObjectOfType<PlayerStats>();
+            if (pStats != null) pStats.ResetToDefault();
+
+            if (PlayerWeaponManager.Instance != null)
+            {
+                PlayerWeaponManager.Instance.EquipBaseWeapon();
+            }
         }
     }
 
-    public void LoadInventoryData()
+    public void LoadAllData()
     {
-        // Mengambil data nama item yang tersimpan
-        var names = SaveSystem.LoadInventoryNames();
-        if (names == null) return;
+        SaveSystem.GameData data = SaveSystem.LoadData();
+        if (data == null) return;
 
-        // UBAH: Bersihkan list .Slots yang baru
-        InventoryManager.Instance.Slots.Clear();
-
-        foreach (string n in names)
+        if (InventoryManager.Instance != null)
         {
-            ItemData item = Resources.Load<ItemData>("Items/" + n);
-            if (item != null)
+            InventoryManager.Instance.Slots.Clear();
+            foreach (string n in data.itemNames)
             {
-                // UBAH: Masukkan ke sistem baru menggunakan fungsi Add() 
-                // agar otomatis mendeteksi tumpukan/stacking
-                InventoryManager.Instance.Add(item, 1);
+                ItemData item = Resources.Load<ItemData>("Items/" + n);
+                if (item != null)
+                {
+                    InventoryManager.Instance.Add(item, 1);
+                }
+            }
+            InventoryManager.Instance.RefreshUI();
+        }
+
+        PlayerLevel pLevel = FindObjectOfType<PlayerLevel>();
+        if (pLevel != null)
+        {
+            pLevel.LoadSavedData(data.level, data.currentExp, data.maxExp);
+        }
+
+        PlayerStats pStats = FindObjectOfType<PlayerStats>();
+        if (pStats != null)
+        {
+            pStats.LoadSavedData(data.maxHealth, data.maxMana, data.attackDamage);
+        }
+
+        if (PlayerWeaponManager.Instance != null)
+        {
+            if (PlayerPrefs.GetInt("SavedWeaponUpgraded", 0) == 1)
+            {
+                PlayerWeaponManager.Instance.EquipUpgradedWeapon();
+            }
+            else
+            {
+                PlayerWeaponManager.Instance.EquipBaseWeapon();
             }
         }
-        InventoryManager.Instance.RefreshUI();
     }
 
     public async void TravelToBoss(string sceneName)
     {
-        // UBAH: Menggunakan .Slots
-        SaveSystem.SaveInventory(InventoryManager.Instance.Slots);
-        Debug.Log("Auto-save completed before transition.");
+        SaveCurrentGame();
+
+        PlayerPrefs.SetInt("LoadFromTransition", 1);
+        PlayerPrefs.Save();
+
         if (SceneFader.Instance != null)
         {
             await SceneFader.Instance.FadeOut();
         }
 
         SceneManager.LoadScene(sceneName);
+    }
+
+    private void SaveCurrentGame()
+    {
+        PlayerLevel pLevel = FindObjectOfType<PlayerLevel>();
+        PlayerStats pStats = FindObjectOfType<PlayerStats>();
+
+        if (pLevel != null && pStats != null && InventoryManager.Instance != null)
+        {
+            SaveSystem.SaveAllData(
+                InventoryManager.Instance.Slots,
+                pLevel.currentLevel,
+                pLevel.currentExp,
+                pLevel.expToNextLevel,
+                pStats.maxHealth,
+                pStats.maxMana,
+                pStats.attackDamage
+            );
+        }
+
+        if (PlayerWeaponManager.Instance != null)
+        {
+            int isUpgraded = PlayerWeaponManager.Instance.IsWeaponMaxLevel() ? 1 : 0;
+            PlayerPrefs.SetInt("SavedWeaponUpgraded", isUpgraded);
+            PlayerPrefs.Save();
+        }
     }
 }

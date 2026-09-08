@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class PlayerLevel : MonoBehaviour
 {
@@ -10,7 +9,7 @@ public class PlayerLevel : MonoBehaviour
     public float expToNextLevel = 100f;
 
     [Header("EXP Curve (per level butuh berapa EXP)")]
-    public float expMultiplierPerLevel = 1.5f; // Level 1→2: 100, Level 2→3: 150, dst
+    public float expMultiplierPerLevel = 1.5f;
 
     [Header("Stat Growth per Level Up")]
     public float healthGainPerLevel = 10f;
@@ -18,7 +17,7 @@ public class PlayerLevel : MonoBehaviour
     public float damageGainPerLevel = 2f;
 
     [Header("UI References")]
-    public StatBarUI expBar;           // Reuse StatBarUI yang sudah ada
+    public StatBarEXP expBar;
     public TMPro.TextMeshProUGUI levelText;
     public GameObject levelUpVFXPrefab;
     public Transform vfxSpawnPoint;
@@ -33,6 +32,7 @@ public class PlayerLevel : MonoBehaviour
     void Start()
     {
         if (expBar != null) expBar.SetMaxValue(expToNextLevel);
+        if (expBar != null) expBar.SetValue(currentExp);
         UpdateUI();
     }
 
@@ -43,7 +43,6 @@ public class PlayerLevel : MonoBehaviour
         currentExp += amount;
         if (expBar != null) expBar.SetValue(currentExp);
 
-        // Cek apakah levelup
         while (currentExp >= expToNextLevel && currentLevel < maxLevel)
         {
             currentExp -= expToNextLevel;
@@ -56,21 +55,17 @@ public class PlayerLevel : MonoBehaviour
         currentLevel++;
         expToNextLevel *= expMultiplierPerLevel;
 
-        // Apply stat bonus ke PlayerStats
         if (playerStats != null)
         {
-            // Akses field private via method baru (lihat modifikasi PlayerStats)
             playerStats.ApplyLevelUpBonus(healthGainPerLevel, manaGainPerLevel, damageGainPerLevel);
         }
 
-        // Refresh exp bar max value
         if (expBar != null)
         {
             expBar.SetMaxValue(expToNextLevel);
             expBar.SetValue(currentExp);
         }
 
-        // Spawn VFX
         if (levelUpVFXPrefab != null && vfxSpawnPoint != null)
         {
             GameObject vfx = Instantiate(levelUpVFXPrefab, vfxSpawnPoint.position, Quaternion.identity);
@@ -79,12 +74,41 @@ public class PlayerLevel : MonoBehaviour
         }
 
         UpdateUI();
-        Debug.Log($"<color=yellow>LEVEL UP! Sekarang Level {currentLevel}</color>");
     }
 
     private void UpdateUI()
     {
         if (levelText != null)
             levelText.text = $"Lv. {currentLevel}";
+    }
+
+    public void ResetToDefault()
+    {
+        currentLevel = 1;
+        currentExp = 0f;
+        expToNextLevel = 100f;
+
+        if (expBar != null)
+        {
+            expBar.SetMaxValue(expToNextLevel);
+            expBar.SetValue(currentExp);
+        }
+
+        UpdateUI();
+    }
+
+    public void LoadSavedData(int savedLevel, float savedExp, float savedMaxExp)
+    {
+        currentLevel = savedLevel;
+        currentExp = savedExp;
+        expToNextLevel = savedMaxExp;
+
+        if (expBar != null)
+        {
+            expBar.SetMaxValue(expToNextLevel);
+            expBar.SetValue(currentExp);
+        }
+
+        UpdateUI();
     }
 }

@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6155214953976293732}
   - component: {fileID: 6217742294676092328}
   - component: {fileID: 274538185290753234}
+  - component: {fileID: 5151080550325512090}
   m_Layer: 7
   m_Name: Enemy_Basic_Female_2
   m_TagString: Untagged
@@ -162,6 +163,19 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &5151080550325512090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 787905363251756118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95f4b8e5e6d91a2498a739c16313b922, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExpReward
+  expAmount: 20
 --- !u!1 &8900528711616288537
 GameObject:
   m_ObjectHideFlags: 0

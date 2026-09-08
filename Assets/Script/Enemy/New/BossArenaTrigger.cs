@@ -10,26 +10,27 @@ public class BossArenaTrigger : MonoBehaviour
     public Animator bossAnimator;
 
     [Header("Cutscene Elements")]
-    public GameObject cutsceneCamera; 
-    public GameObject invisibleWall;  
-    public float cutsceneDuration = 4f; 
+    public GameObject cutsceneCamera;
+    public GameObject invisibleWall;
+    public float cutsceneDuration = 4f;
 
     [Header("Player References")]
-    public MonoBehaviour playerMovement; 
-    public MonoBehaviour playerCombat;  
+    public MonoBehaviour playerMovement;
+    public MonoBehaviour playerCombat;
 
     [Header("UI Elements")]
-    public CanvasGroup mainHUDCanvasGroup; 
+    public CanvasGroup mainHUDCanvasGroup;
     public float uiFadeSpeed = 2f;
 
     private bool hasTriggered = false;
+    private bool hasCutscenePlayed = false;
+
     public BossQuestManager questManager;
 
     private void Start()
     {
         if (bossTarget != null) bossTarget.enabled = false;
         if (cutsceneCamera != null) cutsceneCamera.SetActive(false);
-
         if (invisibleWall != null) invisibleWall.SetActive(false);
     }
 
@@ -39,27 +40,29 @@ public class BossArenaTrigger : MonoBehaviour
         {
             hasTriggered = true;
 
-            // Jika bos sudah Phase 2, LANGSUNG mulai perang tanpa cutscene panjang
+            if (questManager != null)
+            {
+                questManager.StartBossFight();
+            }
+
             if (bossTarget != null && bossTarget.isPhase2)
             {
                 StartCoroutine(SkipCutsceneSequence());
             }
-            else
+            else if (!hasCutscenePlayed)
             {
-                // Jika masih Phase 1, mainkan cutscene normal
+                hasCutscenePlayed = true;
                 StartCoroutine(PlayCutsceneSequence());
             }
-            if (questManager != null)
+            else
             {
-                questManager.StartBossFight();
+                StartCoroutine(SkipCutsceneSequence());
             }
         }
     }
 
     private IEnumerator PlayCutsceneSequence()
     {
-        Debug.Log("<color=cyan>Cutscene Started!</color>");
-
         if (mainHUDCanvasGroup != null) mainHUDCanvasGroup.alpha = 0f;
 
         if (invisibleWall != null) invisibleWall.SetActive(true);
@@ -91,26 +94,23 @@ public class BossArenaTrigger : MonoBehaviour
             UnityEngine.AI.NavMeshAgent agent = bossCombat.GetComponent<UnityEngine.AI.NavMeshAgent>();
             if (agent != null) agent.isStopped = false;
         }
-
-        Debug.Log($"<color=orange>Boss Battle Started: {bossTarget.name}</color>");
     }
 
     public void ResetTrigger()
     {
-        hasTriggered = false; 
+        hasTriggered = false;
 
         if (invisibleWall != null)
         {
-            invisibleWall.SetActive(false); 
+            invisibleWall.SetActive(false);
         }
 
         if (cutsceneCamera != null)
         {
             cutsceneCamera.SetActive(false);
         }
-
-        Debug.Log("<color=yellow>Boss Arena Trigger Ready For Re-Entry!</color>");
     }
+
     private IEnumerator SkipCutsceneSequence()
     {
         if (invisibleWall != null) invisibleWall.SetActive(true);

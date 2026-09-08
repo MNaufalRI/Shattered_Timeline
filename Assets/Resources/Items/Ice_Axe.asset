@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ice_Axe
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Ice Axe
-  icon: {fileID: 0}
+  icon: {fileID: 1598871589, guid: 80dc8c9afeae78c46bcd8443d7badb0d, type: 3}
   itemType: 2
   isStackable: 0
   maxStack: 1

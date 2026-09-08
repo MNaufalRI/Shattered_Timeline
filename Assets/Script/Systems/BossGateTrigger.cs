@@ -2,13 +2,9 @@ using UnityEngine;
 
 public class BossGateTrigger : MonoBehaviour
 {
-    [Header("Pengaturan Tujuan")]
-    [Tooltip("Ketik nama Scene Boss yang ada di Build Settings")]
     public string bossSceneName = "BossScene";
-
-    [Header("Referensi Quest")]
-    [Tooltip("Tarik GameObject yang memiliki script QuestManager ke sini")]
     public QuestManager questManager;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
@@ -18,45 +14,51 @@ public class BossGateTrigger : MonoBehaviour
                 if (questManager.currentQuest == QuestManager.QuestState.MainQuest2_CheckSound)
                 {
                     Debug.Log("<color=green>Akses diizinkan. Memasuki area Boss...</color>");
-                    LoadBossScene();
+                    LoadBossScene(other.gameObject);
                 }
                 else
                 {
                     Debug.Log("<color=red>Pintu Boss masih terkunci! Selesaikan quest sebelumnya.</color>");
-
                 }
             }
             else
             {
                 Debug.LogWarning("QuestManager tidak ditemukan di Inspector! Pintu otomatis terbuka.");
-
-                LoadBossScene();
+                LoadBossScene(other.gameObject);
             }
         }
     }
 
-    private void LoadBossScene()
+    private void LoadBossScene(GameObject player)
     {
-        // --- TAMBAHAN KODE: Simpan inventory sebelum pindah scene ---
-        if (InventoryManager.Instance != null)
+        PlayerLevel playerLevel = player.GetComponent<PlayerLevel>();
+        PlayerStats playerStats = player.GetComponent<PlayerStats>();
+
+        if (InventoryManager.Instance != null && playerLevel != null && playerStats != null)
         {
-            // UBAH: Menggunakan .Slots bukan .Items
-            SaveSystem.SaveInventory(InventoryManager.Instance.Slots);
-            Debug.Log("Inventory berhasil disimpan sebelum pindah ke boss stage.");
+            SaveSystem.SaveAllData(
+                InventoryManager.Instance.Slots,
+                playerLevel.currentLevel,
+                playerLevel.currentExp,
+                playerLevel.expToNextLevel,
+                playerStats.maxHealth,
+                playerStats.maxMana,
+                playerStats.attackDamage
+            );
         }
-        else
+
+        if (PlayerWeaponManager.Instance != null)
         {
-            Debug.LogWarning("InventoryManager tidak ditemukan, inventory gagal disimpan.");
+            int isUpgraded = PlayerWeaponManager.Instance.IsWeaponMaxLevel() ? 1 : 0;
+            PlayerPrefs.SetInt("SavedWeaponUpgraded", isUpgraded);
         }
-        // -------------------------------------------------------------
+
+        PlayerPrefs.SetInt("LoadFromTransition", 1);
+        PlayerPrefs.Save();
 
         if (LoadingManager.Instance != null)
         {
             LoadingManager.Instance.LoadScene(bossSceneName);
-        }
-        else
-        {
-            Debug.LogError("LoadingManager tidak ditemukan! Pastikan sudah ada di scene awal.");
         }
     }
 }

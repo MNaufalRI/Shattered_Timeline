@@ -41,8 +41,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
     [Tooltip("Masukkan objek Dummy Boss yang ada di tengah arena ke sini")]
     public GameObject dummyCutsceneBoss;
 
-
-
     private void Awake()
     {
         initialPosition = transform.position;
@@ -87,14 +85,8 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             {
                 enemyBase.OnHit();
             }
-            else
-            {
-                Debug.Log("<color=cyan>Boss took damage but has Super Armor!</color>");
-            }
         }
     }
-
-
 
     private IEnumerator EnterPhase2Routine()
     {
@@ -142,19 +134,15 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         if (normalVisuals != null) normalVisuals.SetActive(false);
         if (goldVisuals != null) goldVisuals.SetActive(true);
 
-
         yield return new WaitForSeconds(phase2TransitionTime);
-
 
         try
         {
             ApplyPhase2Buffs();
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogWarning("<color=orange>Ada error di ApplyPhase2Buffs, tapi Cutscene dipaksa lanjut!</color> " + e);
         }
-
 
         if (phase2Camera != null) phase2Camera.SetActive(false);
 
@@ -170,8 +158,6 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
         isImmune = false;
         isPhase2Ready = true;
         if (navMeshAgent != null && navMeshAgent.isOnNavMesh) navMeshAgent.isStopped = false;
-
-        Debug.Log("<color=yellow>DragonBoar memasuki Phase 2! Pertarungan dilanjutkan.</color>");
     }
 
     private void ApplyPhase2Buffs()
@@ -210,33 +196,24 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             questManager.BossDefeated();
         }
 
-
         gameObject.SetActive(false);
 
         if (dummyCutsceneBoss != null)
         {
             dummyCutsceneBoss.SetActive(true);
         }
-        else
-        {
-            Debug.LogWarning("Dummy Boss belum dimasukkan ke Inspector!");
-        }
 
         if (deathTimeline != null)
         {
             deathTimeline.Play();
         }
+
         ExpReward reward = GetComponent<ExpReward>();
         if (reward != null) reward.GiveExp();
     }
 
-    // =========================================================
-    // RESET BOSS: Dipanggil saat player mati — boss kembali ke awal
-    // HP di-reset PENUH, Phase 2 dibatalkan, semua state dikembalikan
-    // =========================================================
     public void ResetBossState()
     {
-        // Hentikan semua coroutine dan state combat boss
         if (combatScript != null)
         {
             combatScript.StopAllCoroutines();
@@ -245,18 +222,15 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             combatScript.ForceStopGluttonyVFX();
         }
 
-        // Hentikan NavMeshAgent sebelum teleport
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
         if (agent != null)
         {
             agent.enabled = false;
         }
 
-        // Reset posisi & rotasi ke posisi awal
         transform.position = initialPosition;
         transform.rotation = initialRotation;
 
-        // Aktifkan kembali NavMeshAgent setelah pindah posisi
         if (agent != null)
         {
             agent.enabled = true;
@@ -267,47 +241,29 @@ public class DragonBoarStats : MonoBehaviour, IDamageable
             }
         }
 
-        // ============================================================
-        // RESET HP PENUH — Ini yang berbeda dari versi lama (heal 20%)
-        // ============================================================
         isDead = false;
         currentHealth = maxHealth;
-        Debug.Log($"<color=lime>Boss HP direset penuh: {currentHealth} / {maxHealth}</color>");
 
-        // Reset Phase 2 sepenuhnya
         isPhase2 = false;
         isPhase2Ready = false;
         isImmune = false;
 
-        // Kembalikan tampilan visual ke Phase 1
         if (normalVisuals != null) normalVisuals.SetActive(true);
         if (goldVisuals != null) goldVisuals.SetActive(false);
         if (phase2Camera != null) phase2Camera.SetActive(false);
 
-        // Aktifkan kembali gameObject jika sebelumnya dinonaktifkan (saat "mati" fake)
         if (!gameObject.activeInHierarchy)
         {
             gameObject.SetActive(true);
         }
 
-        // Reset animator
         if (anim != null)
         {
             anim.Rebind();
             anim.Update(0f);
         }
 
-        // Sembunyikan Boss UI
         BossHealthUI uiManager = FindObjectOfType<BossHealthUI>();
         if (uiManager != null) uiManager.DeactivateBossUI();
-
-        // Reset BossArenaTrigger agar cutscene bisa diputar ulang
-        BossArenaTrigger[] triggers = FindObjectsOfType<BossArenaTrigger>();
-        foreach (var trigger in triggers)
-        {
-            trigger.ResetTrigger();
-        }
-
-        Debug.Log("<color=yellow>Boss telah direset sepenuhnya. Siap bertarung dari awal!</color>");
     }
 }

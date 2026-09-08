@@ -4,42 +4,75 @@ using System.Collections.Generic;
 
 public static class SaveSystem
 {
-    private static string path = Application.persistentDataPath + "/inventory_save.json";
+    private static string path = Application.persistentDataPath + "/gamesave.json";
 
-    // PERBAIKAN: Mengubah List<ItemData> menjadi List<InventorySlot>
-    public static void SaveInventory(List<InventorySlot> slots)
+    public static void SaveAllData(List<InventorySlot> slots, int level, float currentExp, float maxExp, float maxHealth, float maxMana, float attackDamage)
     {
-        InventoryData data = new InventoryData();
+        GameData data = new GameData();
 
-        // Loop untuk membongkar setiap slot di dalam inventory
-        foreach (var slot in slots)
+        if (slots != null)
         {
-            if (slot.item != null)
+            foreach (var slot in slots)
             {
-                // Masukkan nama item sebanyak jumlah (amount) yang ditumpuk di slot tersebut
-                for (int i = 0; i < slot.amount; i++)
+                if (slot.item != null)
                 {
-                    data.itemNames.Add(slot.item.name);
+                    for (int i = 0; i < slot.amount; i++)
+                    {
+                        data.itemNames.Add(slot.item.name);
+                    }
                 }
             }
         }
 
+        data.level = level;
+        data.currentExp = currentExp;
+        data.maxExp = maxExp;
+        data.maxHealth = maxHealth;
+        data.maxMana = maxMana;
+        data.attackDamage = attackDamage;
+
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(path, json);
-        Debug.Log("<color=green>Data Tersimpan di:</color> " + path);
     }
 
-    public static List<string> LoadInventoryNames()
+    public static GameData LoadData()
     {
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
-            InventoryData data = JsonUtility.FromJson<InventoryData>(json);
+            return JsonUtility.FromJson<GameData>(json);
+        }
+        return null;
+    }
+
+    public static List<string> LoadInventoryNames()
+    {
+        GameData data = LoadData();
+        if (data != null)
+        {
             return data.itemNames;
         }
         return null;
     }
 
+    public static void ResetSave()
+    {
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+        PlayerPrefs.DeleteAll();
+    }
+
     [System.Serializable]
-    private class InventoryData { public List<string> itemNames = new List<string>(); }
+    public class GameData
+    {
+        public List<string> itemNames = new List<string>();
+        public int level = 1;
+        public float currentExp = 0f;
+        public float maxExp = 100f;
+        public float maxHealth = 100f;
+        public float maxMana = 50f;
+        public float attackDamage = 20f;
+    }
 }

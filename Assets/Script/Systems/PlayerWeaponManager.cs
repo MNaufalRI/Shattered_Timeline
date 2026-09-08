@@ -4,79 +4,68 @@ public class PlayerWeaponManager : MonoBehaviour
 {
     public static PlayerWeaponManager Instance;
 
-    [Header("Model Senjata di Tangan Karakter")]
-    public GameObject baseAxe3DModel;
-    public GameObject iceAxe3DModel;
+    public ItemData baseWeapon;
+    public ItemData upgradedWeapon;
 
-    [Header("Item Data Referensi")]
-    [Tooltip("Tarik file ItemData Kapak Dasar dari folder Resources ke sini")]
-    public ItemData baseAxeData;
-    [Tooltip("Tarik file ItemData Kapak Es dari folder Resources ke sini")]
-    public ItemData iceAxeData;
+    public GameObject baseWeaponObject;
+    public GameObject upgradedWeaponObject;
 
+    public GameObject skill3IconUI;
+
+    private ItemData currentWeapon;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
+        Instance = this;
     }
 
-    // FUNGSI BARU: Untuk mengecek apakah player sedang memakai senjata tertentu
-    public bool IsHoldingWeapon(ItemData weaponToCheck)
+    public void EquipBaseWeapon()
     {
-        if (weaponToCheck == null) return false;
+        currentWeapon = baseWeapon;
 
-        // Jika resep mencari Kapak Dasar, dan Kapak Dasar di tangan sedang aktif (true)
-        if (baseAxeData != null && weaponToCheck.name == baseAxeData.name)
+        if (baseWeaponObject != null) baseWeaponObject.SetActive(true);
+        if (upgradedWeaponObject != null) upgradedWeaponObject.SetActive(false);
+        if (skill3IconUI != null) skill3IconUI.SetActive(false);
+
+        if (baseWeaponObject != null)
         {
-            return baseAxe3DModel != null && baseAxe3DModel.activeSelf;
-        }
+            DamageDealer baseDealer = baseWeaponObject.GetComponentInChildren<DamageDealer>();
+            PlayerControl playerCtrl = GetComponent<PlayerControl>();
 
-        // Jika resep mencari Kapak Es (misal untuk upgrade ke level selanjutnya nanti)
-        if (iceAxeData != null && weaponToCheck.name == iceAxeData.name)
-        {
-            return iceAxe3DModel != null && iceAxe3DModel.activeSelf;
+            if (playerCtrl != null && baseDealer != null)
+            {
+                playerCtrl.UpdateWeaponDamageDealer(baseDealer);
+            }
         }
-
-        return false;
     }
 
     public void EquipUpgradedWeapon()
     {
-        // 1. Matikan kapak lama di tangan
-        if (baseAxe3DModel != null) baseAxe3DModel.SetActive(false);
+        currentWeapon = upgradedWeapon;
 
-        // 2. Nyalakan kapak es di tangan
-        if (iceAxe3DModel != null)
+        if (baseWeaponObject != null) baseWeaponObject.SetActive(false);
+        if (upgradedWeaponObject != null) upgradedWeaponObject.SetActive(true);
+        if (skill3IconUI != null) skill3IconUI.SetActive(true);
+
+        if (upgradedWeaponObject != null)
         {
-            iceAxe3DModel.SetActive(true);
-
-            // --- PERBAIKAN DI SINI: Gunakan GetComponentInChildren ---
-            // Unity akan otomatis mengubek-ubek isi child dari Ice Axe sampai ketemu DamageDealer
-            DamageDealer newIceAxeDealer = iceAxe3DModel.GetComponentInChildren<DamageDealer>();
-
-            // 3. Kirimkan komponen tersebut ke PlayerControl
+            DamageDealer newIceAxeDealer = upgradedWeaponObject.GetComponentInChildren<DamageDealer>();
             PlayerControl playerCtrl = GetComponent<PlayerControl>();
 
             if (playerCtrl != null && newIceAxeDealer != null)
             {
                 playerCtrl.UpdateWeaponDamageDealer(newIceAxeDealer);
-                Debug.Log($"<color=lime>[SUCCESS]</color> Berhasil menemukan DamageDealer di child milik {newIceAxeDealer.gameObject.name}!");
-            }
-            else
-            {
-                if (playerCtrl == null) Debug.LogError("PlayerCtrl tidak ditemukan di tubuh Player!");
-                if (newIceAxeDealer == null) Debug.LogError("Gagal menemukan DamageDealer di dalam child Ice Axe! Periksa kembali apakah scriptnya sudah terpasang.");
             }
         }
     }
 
+    public bool IsHoldingWeapon(ItemData weaponToCheck)
+    {
+        return currentWeapon == weaponToCheck;
+    }
+
     public bool IsWeaponMaxLevel()
     {
-        // Cek apakah model 3D Kapak Es sedang aktif di tangan
-        if (iceAxe3DModel != null)
-        {
-            return iceAxe3DModel.activeSelf;
-        }
-        return false;
+        return currentWeapon == upgradedWeapon;
     }
 }

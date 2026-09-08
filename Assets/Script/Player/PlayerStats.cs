@@ -65,6 +65,9 @@ public class PlayerStats : MonoBehaviour
 
     void Start()
     {
+        if (healthBar != null) healthBar.SetMaxValue(_maxHealth);
+        if (manaBar != null) manaBar.SetMaxValue(_maxMana);
+
         _currentHealth = _maxHealth;
         _currentMana = _maxMana;
         lastHealth = _currentHealth;
@@ -321,25 +324,20 @@ public class PlayerStats : MonoBehaviour
 
         if (controller != null)
         {
-            controller.MoveSpeed = 5.0f;   
-            controller.SprintSpeed = 10.0f; 
+            controller.MoveSpeed = 5.0f;
+            controller.SprintSpeed = 10.0f;
         }
     }
 
     private IEnumerator SpawnImmunityRoutine(float duration)
     {
         isInvincible = true;
-        Debug.Log("<color=cyan>Player is Immune for 3 Seconds!</color>");
-
         yield return new WaitForSeconds(duration);
-
         isInvincible = false;
-        Debug.Log("<color=cyan>Player Immunity Ended.</color>");
     }
 
     private void ResetBossArena()
     {
-
         DragonBoarStats[] bosses = FindObjectsOfType<DragonBoarStats>();
         foreach (var boss in bosses)
         {
@@ -352,6 +350,7 @@ public class PlayerStats : MonoBehaviour
             trigger.ResetTrigger();
         }
     }
+
     public void ApplyLevelUpBonus(float hpBonus, float manaBonus, float dmgBonus)
     {
         _maxHealth += hpBonus;
@@ -365,5 +364,44 @@ public class PlayerStats : MonoBehaviour
 
         UpdateUI();
     }
-}
 
+    public void ResetToDefault()
+    {
+        _maxHealth = 100f;
+        _currentHealth = _maxHealth;
+        _maxMana = 50f;
+        _currentMana = _maxMana;
+        _baseDamage = 20f;
+
+        if (healthBar != null)
+        {
+            healthBar.SetMaxValue(_maxHealth);
+            healthBar.SetValue(_currentHealth);
+        }
+
+        if (manaBar != null)
+        {
+            manaBar.SetMaxValue(_maxMana);
+            manaBar.SetValue(_currentMana);
+        }
+
+        UpdateUI();
+    }
+
+    public void LoadSavedData(float savedHp, float savedMp, float savedDmg)
+    {
+        _maxHealth = savedHp;
+        _maxMana = savedMp;
+        _baseDamage = savedDmg;
+
+        if (healthBar != null) healthBar.SetMaxValue(_maxHealth);
+        if (manaBar != null) manaBar.SetMaxValue(_maxMana);
+
+        _currentHealth = _maxHealth;
+        _currentMana = _maxMana;
+        lastHealth = _currentHealth;
+        lastMana = _currentMana;
+
+        UpdateUI();
+    }
+}

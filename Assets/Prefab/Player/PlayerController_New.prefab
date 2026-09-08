@@ -664,15 +664,15 @@ PrefabInstance:
       objectReference: {fileID: 9017484664307500583, guid: 1245b8d2997d5b34fb1637be70a7eb05, type: 3}
     - target: {fileID: 2875949919914028908, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: currentSpawnPoint.x
-      value: 372.42
+      value: -69.95
       objectReference: {fileID: 0}
     - target: {fileID: 2875949919914028908, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: currentSpawnPoint.y
-      value: 0.25
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2875949919914028908, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: currentSpawnPoint.z
-      value: -646.62
+      value: -114.93
       objectReference: {fileID: 0}
     - target: {fileID: 2888401013257812732, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1644,15 +1644,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7303459930650656635, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 374.9
+      value: -69.95
       objectReference: {fileID: 0}
     - target: {fileID: 7303459930650656635, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.25
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7303459930650656635, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -650.5
+      value: -114.93
       objectReference: {fileID: 0}
     - target: {fileID: 7303459930650656635, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2259,6 +2259,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1535278682347903762, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5988544687216641401}
+    - targetCorrespondingSourceObject: {fileID: 1535278682347903762, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6511387490640259988}
   m_SourcePrefab: {fileID: 100100000, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
 --- !u!4 &64004692812174064 stripped
 Transform:
@@ -2296,6 +2299,30 @@ MonoBehaviour:
   iceAxe3DModel: {fileID: 6364252308782504141}
   baseAxeData: {fileID: 11400000, guid: 4de8c973eebd86c4eb133d4df1999504, type: 2}
   iceAxeData: {fileID: 11400000, guid: bf9379ca4243d7b46873bdc2ea133af6, type: 2}
+--- !u!114 &6511387490640259988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8895907838749594336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 968baaabf5779a74cafe0cef91d244c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLevel
+  currentLevel: 1
+  maxLevel: 50
+  currentExp: 0
+  expToNextLevel: 100
+  expMultiplierPerLevel: 1.5
+  healthGainPerLevel: 10
+  manaGainPerLevel: 5
+  damageGainPerLevel: 2
+  expBar: {fileID: 0}
+  levelText: {fileID: 0}
+  levelUpVFXPrefab: {fileID: 8895907838749594336}
+  vfxSpawnPoint: {fileID: 0}
 --- !u!1 &9010268412425450223 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1382637769269017373, guid: 5b67acda2f4bb884594c28919dc76cf8, type: 3}
